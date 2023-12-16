@@ -1,0 +1,344 @@
+dtmc
+const int N=9;
+const int xstart = 0;
+const int ystart = 0;
+const int xtarget = 9;
+const int ytarget = 9;
+const double p = 0.01;
+ 
+formula hasCrashed = (1=0) | (x=0 & y=1) | (x=0 & y=4) | (x=0 & y=8) | (x=1 & y=9) | (x=2 & y=2) | (x=2 & y=4) | (x=2 & y=7) | (x=2 & y=8) | (x=2 & y=9) | (x=3 & y=3) | (x=3 & y=9) | (x=4 & y=1) | (x=4 & y=5) | (x=4 & y=6) | (x=4 & y=8) | (x=4 & y=9) | (x=5 & y=1) | (x=5 & y=2) | (x=5 & y=8) | (x=6 & y=2) | (x=6 & y=3) | (x=6 & y=4) | (x=7 & y=1) | (x=7 & y=7) | (x=8 & y=2) | (x=8 & y=4) | (x=8 & y=6) | (x=9 & y=1) | (x=9 & y=5) | (x=9 & y=7) ;
+
+module Robot 
+  x : [0..N] init xstart;
+  y : [0..N] init ystart;
+  move_ready : [0..1] init 1;
+  crashed : [0..1] init 0;
+
+  [east] (move_ready=1) -> 
+    (1-3*p): (x'=min(x+1, N)) & (move_ready'=0) + 
+    p: (y'=min(y+1, N)) & (move_ready'=0) + 
+    p: (y'=max(y-1, 0)) & (move_ready'=0) + 
+    p: (x'=max(x-1, 0)) & (move_ready'=0); 
+  [west] (move_ready=1) -> 
+    p: (x'=min(x+1, N)) & (move_ready'=0) + 
+    p: (y'=min(y+1, N)) & (move_ready'=0) + 
+    p: (y'=max(y-1, 0)) & (move_ready'=0) + 
+    (1-3*p): (x'=max(x-1, 0)) & (move_ready'=0); 
+  [north] (move_ready=1) -> 
+    p: (x'=min(x+1, N)) & (move_ready'=0) + 
+    (1-3*p): (y'=min(y+1, N)) & (move_ready'=0) + 
+    p: (y'=max(y-1, 0)) & (move_ready'=0) + 
+    p: (x'=max(x-1, 0)) & (move_ready'=0); 
+  [south] (move_ready=1) -> 
+    p: (x'=min(x+1, N)) & (move_ready'=0) + 
+    p: (y'=min(y+1, N)) & (move_ready'=0) + 
+    (1-3*p): (y'=max(y-1, 0)) & (move_ready'=0) + 
+    p: (x'=max(x-1, 0)) & (move_ready'=0); 
+
+  [check] (move_ready=0) & hasCrashed -> (crashed'=1) & (move_ready'=1); 
+  [check] (move_ready=0) & !hasCrashed -> (crashed'=0) & (move_ready'=1); 
+  [stucked] (crashed=1) -> true;
+endmodule
+
+module Adaptation_MAPE_controller
+  [east] (xhat=0) & (yhat=0) & (crashed=0) -> true;
+  [north] (xhat=0) & (yhat=2) & (crashed=0) -> true;
+  [east] (xhat=0) & (yhat=3) & (crashed=0) -> true;
+  [north] (xhat=0) & (yhat=5) & (crashed=0) -> true;
+  [east] (xhat=0) & (yhat=6) & (crashed=0) -> true;
+  [south] (xhat=0) & (yhat=7) & (crashed=0) -> true;
+  [north] (xhat=1) & (yhat=0) & (crashed=0) -> true;
+  [north] (xhat=1) & (yhat=1) & (crashed=0) -> true;
+  [north] (xhat=1) & (yhat=2) & (crashed=0) -> true;
+  [north] (xhat=1) & (yhat=3) & (crashed=0) -> true;
+  [north] (xhat=1) & (yhat=4) & (crashed=0) -> true;
+  [north] (xhat=1) & (yhat=5) & (crashed=0) -> true;
+  [east] (xhat=1) & (yhat=6) & (crashed=0) -> true;
+  [south] (xhat=1) & (yhat=7) & (crashed=0) -> true;
+  [south] (xhat=1) & (yhat=8) & (crashed=0) -> true;
+  [west] (xhat=2) & (yhat=0) & (crashed=0) -> true;
+  [west] (xhat=2) & (yhat=1) & (crashed=0) -> true;
+  [west] (xhat=2) & (yhat=3) & (crashed=0) -> true;
+  [north] (xhat=2) & (yhat=5) & (crashed=0) -> true;
+  [east] (xhat=2) & (yhat=6) & (crashed=0) -> true;
+  [west] (xhat=3) & (yhat=0) & (crashed=0) -> true;
+  [north] (xhat=3) & (yhat=1) & (crashed=0) -> true;
+  [east] (xhat=3) & (yhat=2) & (crashed=0) -> true;
+  [east] (xhat=3) & (yhat=4) & (crashed=0) -> true;
+  [north] (xhat=3) & (yhat=5) & (crashed=0) -> true;
+  [north] (xhat=3) & (yhat=6) & (crashed=0) -> true;
+  [east] (xhat=3) & (yhat=7) & (crashed=0) -> true;
+  [south] (xhat=3) & (yhat=8) & (crashed=0) -> true;
+  [west] (xhat=4) & (yhat=0) & (crashed=0) -> true;
+  [north] (xhat=4) & (yhat=2) & (crashed=0) -> true;
+  [north] (xhat=4) & (yhat=3) & (crashed=0) -> true;
+  [east] (xhat=4) & (yhat=4) & (crashed=0) -> true;
+  [east] (xhat=4) & (yhat=7) & (crashed=0) -> true;
+  [west] (xhat=5) & (yhat=0) & (crashed=0) -> true;
+  [north] (xhat=5) & (yhat=3) & (crashed=0) -> true;
+  [north] (xhat=5) & (yhat=4) & (crashed=0) -> true;
+  [north] (xhat=5) & (yhat=5) & (crashed=0) -> true;
+  [east] (xhat=5) & (yhat=6) & (crashed=0) -> true;
+  [east] (xhat=5) & (yhat=7) & (crashed=0) -> true;
+  [east] (xhat=5) & (yhat=9) & (crashed=0) -> true;
+  [west] (xhat=6) & (yhat=0) & (crashed=0) -> true;
+  [south] (xhat=6) & (yhat=1) & (crashed=0) -> true;
+  [north] (xhat=6) & (yhat=5) & (crashed=0) -> true;
+  [north] (xhat=6) & (yhat=6) & (crashed=0) -> true;
+  [north] (xhat=6) & (yhat=7) & (crashed=0) -> true;
+  [north] (xhat=6) & (yhat=8) & (crashed=0) -> true;
+  [east] (xhat=6) & (yhat=9) & (crashed=0) -> true;
+  [west] (xhat=7) & (yhat=0) & (crashed=0) -> true;
+  [north] (xhat=7) & (yhat=2) & (crashed=0) -> true;
+  [north] (xhat=7) & (yhat=3) & (crashed=0) -> true;
+  [north] (xhat=7) & (yhat=4) & (crashed=0) -> true;
+  [west] (xhat=7) & (yhat=5) & (crashed=0) -> true;
+  [west] (xhat=7) & (yhat=6) & (crashed=0) -> true;
+  [north] (xhat=7) & (yhat=8) & (crashed=0) -> true;
+  [east] (xhat=7) & (yhat=9) & (crashed=0) -> true;
+  [west] (xhat=8) & (yhat=0) & (crashed=0) -> true;
+  [south] (xhat=8) & (yhat=1) & (crashed=0) -> true;
+  [west] (xhat=8) & (yhat=3) & (crashed=0) -> true;
+  [west] (xhat=8) & (yhat=5) & (crashed=0) -> true;
+  [north] (xhat=8) & (yhat=7) & (crashed=0) -> true;
+  [north] (xhat=8) & (yhat=8) & (crashed=0) -> true;
+  [east] (xhat=8) & (yhat=9) & (crashed=0) -> true;
+  [west] (xhat=9) & (yhat=0) & (crashed=0) -> true;
+  [north] (xhat=9) & (yhat=2) & (crashed=0) -> true;
+  [west] (xhat=9) & (yhat=3) & (crashed=0) -> true;
+  [south] (xhat=9) & (yhat=4) & (crashed=0) -> true;
+  [north] (xhat=9) & (yhat=8) & (crashed=0) -> true;
+endmodule
+
+module Knowledge
+  xhat : [0..N] init xstart;
+  yhat : [0..N] init ystart;
+  step : [0..c] init 0;
+
+  ready : [0..1] init 1;
+  [west] ready=1 -> (xhat'=max(xhat-1, 0)) & (ready'=0);
+  [east] ready=1 -> (xhat'=min(xhat+1, N)) & (ready'=0);
+  [south] ready=1 -> (yhat'=max(yhat-1, 0)) & (ready'=0);
+  [north] ready=1 -> (yhat'=min(yhat+1, N)) & (ready'=0);
+  [update] step>=c & ready=0 -> (xhat'=x) & (yhat'=y) & (step'=0) & (ready'=1);
+  [skip_update] step<c & ready=0 -> (step'=step+1) & (ready'=1);
+endmodule
+
+rewards "cost" 
+  [east] true : 1; 
+  [west] true : 1; 
+  [north] true : 1; 
+  [south] true : 1; 
+  [update] true : 5;
+endrewards 
+
+evolve int decision_0_0 [1..10];
+evolve int decision_0_1 [1..10];
+evolve int decision_0_2 [1..10];
+evolve int decision_0_3 [1..10];
+evolve int decision_0_4 [1..10];
+evolve int decision_0_5 [1..10];
+evolve int decision_0_6 [1..10];
+evolve int decision_0_7 [1..10];
+evolve int decision_0_8 [1..10];
+evolve int decision_0_9 [1..10];
+evolve int decision_1_0 [1..10];
+evolve int decision_1_1 [1..10];
+evolve int decision_1_2 [1..10];
+evolve int decision_1_3 [1..10];
+evolve int decision_1_4 [1..10];
+evolve int decision_1_5 [1..10];
+evolve int decision_1_6 [1..10];
+evolve int decision_1_7 [1..10];
+evolve int decision_1_8 [1..10];
+evolve int decision_1_9 [1..10];
+evolve int decision_2_0 [1..10];
+evolve int decision_2_1 [1..10];
+evolve int decision_2_2 [1..10];
+evolve int decision_2_3 [1..10];
+evolve int decision_2_4 [1..10];
+evolve int decision_2_5 [1..10];
+evolve int decision_2_6 [1..10];
+evolve int decision_2_7 [1..10];
+evolve int decision_2_8 [1..10];
+evolve int decision_2_9 [1..10];
+evolve int decision_3_0 [1..10];
+evolve int decision_3_1 [1..10];
+evolve int decision_3_2 [1..10];
+evolve int decision_3_3 [1..10];
+evolve int decision_3_4 [1..10];
+evolve int decision_3_5 [1..10];
+evolve int decision_3_6 [1..10];
+evolve int decision_3_7 [1..10];
+evolve int decision_3_8 [1..10];
+evolve int decision_3_9 [1..10];
+evolve int decision_4_0 [1..10];
+evolve int decision_4_1 [1..10];
+evolve int decision_4_2 [1..10];
+evolve int decision_4_3 [1..10];
+evolve int decision_4_4 [1..10];
+evolve int decision_4_5 [1..10];
+evolve int decision_4_6 [1..10];
+evolve int decision_4_7 [1..10];
+evolve int decision_4_8 [1..10];
+evolve int decision_4_9 [1..10];
+evolve int decision_5_0 [1..10];
+evolve int decision_5_1 [1..10];
+evolve int decision_5_2 [1..10];
+evolve int decision_5_3 [1..10];
+evolve int decision_5_4 [1..10];
+evolve int decision_5_5 [1..10];
+evolve int decision_5_6 [1..10];
+evolve int decision_5_7 [1..10];
+evolve int decision_5_8 [1..10];
+evolve int decision_5_9 [1..10];
+evolve int decision_6_0 [1..10];
+evolve int decision_6_1 [1..10];
+evolve int decision_6_2 [1..10];
+evolve int decision_6_3 [1..10];
+evolve int decision_6_4 [1..10];
+evolve int decision_6_5 [1..10];
+evolve int decision_6_6 [1..10];
+evolve int decision_6_7 [1..10];
+evolve int decision_6_8 [1..10];
+evolve int decision_6_9 [1..10];
+evolve int decision_7_0 [1..10];
+evolve int decision_7_1 [1..10];
+evolve int decision_7_2 [1..10];
+evolve int decision_7_3 [1..10];
+evolve int decision_7_4 [1..10];
+evolve int decision_7_5 [1..10];
+evolve int decision_7_6 [1..10];
+evolve int decision_7_7 [1..10];
+evolve int decision_7_8 [1..10];
+evolve int decision_7_9 [1..10];
+evolve int decision_8_0 [1..10];
+evolve int decision_8_1 [1..10];
+evolve int decision_8_2 [1..10];
+evolve int decision_8_3 [1..10];
+evolve int decision_8_4 [1..10];
+evolve int decision_8_5 [1..10];
+evolve int decision_8_6 [1..10];
+evolve int decision_8_7 [1..10];
+evolve int decision_8_8 [1..10];
+evolve int decision_8_9 [1..10];
+evolve int decision_9_0 [1..10];
+evolve int decision_9_1 [1..10];
+evolve int decision_9_2 [1..10];
+evolve int decision_9_3 [1..10];
+evolve int decision_9_4 [1..10];
+evolve int decision_9_5 [1..10];
+evolve int decision_9_6 [1..10];
+evolve int decision_9_7 [1..10];
+evolve int decision_9_8 [1..10];
+evolve int decision_9_9 [1..10];
+module UMC
+  turn : [1..3] init 1;
+  [east] (t=1) -> (t'=2);
+  [west] (t=1) -> (t'=2);
+  [north] (t=1) -> (t'=2);
+  [south] (t=1) -> (t'=2);
+
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+  [] (t=2) -> (c'=decision_1_10) & (t'=3);
+
+  [check] (t=3) -> (t'=1);
+endmodule

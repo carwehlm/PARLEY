@@ -1,0 +1,7 @@
+<launch>
+  
+  <!-- Box spawn -->
+  <!-- Template -->
+  <!-- <node name="spawn_obstacle_0" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen" args="-sdf -file $(find umc_turtlebot)/models/box/model.sdf -model box_0 -x 0.0 -y 0.0 -z 0.0"/> -->
+
+</launch>

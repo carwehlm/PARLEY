@@ -1,0 +1,9 @@
+{
+    "startX": 0,
+    "startY": 0,
+    "targetX": 9,
+    "targetY": 9,
+    "p": 0.01,
+    "updates": [5],
+    "map_file": "map.csv"
+}

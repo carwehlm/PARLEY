@@ -1,0 +1,6 @@
+//Objective, min
+R{"cost"}=? [ C <=200 ]
+
+//Objective, min
+R{"infected"}=? [ C <=200 ]
+

@@ -1,0 +1,6 @@
+P=? [ F reached=1 ]
+
+R{"time"}=? [ F reached=1 ]
+
+R{"energy"}=?[F reached=1]
+

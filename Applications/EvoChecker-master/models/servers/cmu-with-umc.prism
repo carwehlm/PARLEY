@@ -1,0 +1,539 @@
+dtmc
+
+module Servers
+  //compromised?
+  a : [0..1] init 0;
+  b : [0..1] init 0;
+  step : [0..2] init 0;
+
+  //if a is working fine, it may become compromised
+  [attack] (step=0) & (a=0) -> 
+    0.7: (a'=0) & (step'=1) + 
+    0.3: (a'=1) & (step'=1);
+  [attack] (step=0) & (a=1) & (b=0) -> 
+    0.7: (b'=0) & (step'=1) + 
+    0.3: (b'=1) & (step'=1);
+  [attack] (step=0) & (a=1) & (b=1) -> (step'=1);
+
+  //check if B is offline as this will incur a cost of 500
+  [check] (step=1) -> (step'=2);
+
+  [NOP]       (step=2) -> (step'=0);
+  [restoreA]  (step=2) -> (step'=0) & (a'=0);
+  [restoreAB] (step=2) -> (step'=0) & (a'=0) & (b'=0);
+endmodule
+
+module Time
+  time : [0..23] init 0;
+  time_status : [0..2] init 0;
+  [attack] (time<8) -> (time'=time+1) & (time_status'=0);
+  [attack] (time>=8) & (time<17) -> (time'=time+1) & (time_status'=1);
+  [attack] (time>=17) & (time<23) -> (time'=time+1) & (time_status'=2);
+  [attack] (time>=23) -> (time'=0) & (time_status'=0);
+endmodule
+
+
+module Adaptation_MAPE_controller 
+  [NOP]       (ahat<3) -> true;
+  [restoreA]  (ahat>=3) & (bhat<1) -> true;
+  [restoreAB] (bhat=1) -> true;
+
+endmodule
+
+module Count
+  counter: [1..100];
+  [attack] counter<100 -> (counter'=counter+1);
+endmodule
+
+module Knowledge
+  //P(a compromised)
+  ahat : [0..10] init 0;
+  bhat : [0..1] init 0;
+  confidence : [0..1] init 1;
+
+  //the IDS can give us some probability if a is compromised
+  [check] (a=0) & (b=0) & (confidence=1) -> 
+    0.15: (ahat'=0) +
+    0.15: (ahat'=1) +
+    0.15: (ahat'=1) +
+    0.1: (ahat'=1) +
+    0.1: (ahat'=2) +
+    0.1: (ahat'=3) +
+    0.1: (ahat'=4) +
+    0.1: (ahat'=6) +
+    0.05: (ahat'=9);
+  // if a was hacked
+  [check] (a=1) & (b=0) & (confidence=1) -> 
+    0.05: (ahat'=0) +
+    0.1: (ahat'=1) +
+    0.1: (ahat'=3) +
+    0.1: (ahat'=4) +
+    0.1: (ahat'=5) +
+    0.1: (ahat'=6) +
+    0.1: (ahat'=8) +
+    0.1: (ahat'=8) +
+    0.1: (ahat'=9) +
+    0.15: (ahat'=9);
+  
+  [check] (a=0) & (b=0) & (confidence=0) -> 
+    0.15: (ahat'=0) +
+    0.15: (ahat'=1) +
+    0.15: (ahat'=2) +
+    0.15: (ahat'=3) +
+    0.1: (ahat'=4) +
+    0.1: (ahat'=5) +
+    0.1: (ahat'=6) +
+    0.05: (ahat'=7) +
+    0.05: (ahat'=8);
+  // if a was hacked
+  [check] (a=1) & (b=0) & (confidence=0) -> 
+    0.05: (ahat'=0) +
+    0.05: (ahat'=1) +
+    0.1: (ahat'=2) +
+    0.1: (ahat'=4) +
+    0.1: (ahat'=5) +
+    0.1: (ahat'=6) +
+    0.1: (ahat'=7) +
+    0.1: (ahat'=8) +
+    0.15: (ahat'=9) +
+    0.15: (ahat'=9);
+  // if b is hacked, we'll know that both a and b are hacked
+  [check] (b=1) -> (ahat'=10) & (bhat'=1);
+
+  [attack] true -> 
+    0.3: (confidence'=0) + 
+    0.7: (confidence'=1);
+
+  [NOP]       true -> true;
+  [restoreA]  true -> (ahat'=0);
+  [restoreAB] true -> (ahat'=0) & (bhat'=0);
+  [update] true -> (ahat'=a) & (bhat'=b);
+endmodule
+
+rewards "cost"
+  [update] true : 25;
+
+  [restoreA]  (time>=9) & (time<17) : 50;
+  [restoreA]  (time<9): 10;
+  [restoreA]  (time>=17): 20;
+
+  [restoreAB]  (time>=9) & (time<17) : 100;
+  [restoreAB]  (time<9): 25;
+  [restoreAB]  (time>=17): 50;
+endrewards
+rewards "infected"
+  [check] b=1 : 500;
+endrewards
+
+evolve int decision_0_0_0_0 [0..1];
+evolve int decision_0_0_0_1 [0..1];
+evolve int decision_0_0_1_0 [0..1];
+evolve int decision_0_0_1_1 [0..1];
+evolve int decision_0_1_0_0 [0..1];
+evolve int decision_0_1_0_1 [0..1];
+evolve int decision_0_1_1_0 [0..1];
+evolve int decision_0_1_1_1 [0..1];
+evolve int decision_0_2_0_0 [0..1];
+evolve int decision_0_2_0_1 [0..1];
+evolve int decision_0_2_1_0 [0..1];
+evolve int decision_0_2_1_1 [0..1];
+evolve int decision_0_3_0_0 [0..1];
+evolve int decision_0_3_0_1 [0..1];
+evolve int decision_0_3_1_0 [0..1];
+evolve int decision_0_3_1_1 [0..1];
+evolve int decision_0_4_0_0 [0..1];
+evolve int decision_0_4_0_1 [0..1];
+evolve int decision_0_4_1_0 [0..1];
+evolve int decision_0_4_1_1 [0..1];
+evolve int decision_0_5_0_0 [0..1];
+evolve int decision_0_5_0_1 [0..1];
+evolve int decision_0_5_1_0 [0..1];
+evolve int decision_0_5_1_1 [0..1];
+evolve int decision_0_6_0_0 [0..1];
+evolve int decision_0_6_0_1 [0..1];
+evolve int decision_0_6_1_0 [0..1];
+evolve int decision_0_6_1_1 [0..1];
+evolve int decision_0_7_0_0 [0..1];
+evolve int decision_0_7_0_1 [0..1];
+evolve int decision_0_7_1_0 [0..1];
+evolve int decision_0_7_1_1 [0..1];
+evolve int decision_0_8_0_0 [0..1];
+evolve int decision_0_8_0_1 [0..1];
+evolve int decision_0_8_1_0 [0..1];
+evolve int decision_0_8_1_1 [0..1];
+evolve int decision_0_9_0_0 [0..1];
+evolve int decision_0_9_0_1 [0..1];
+evolve int decision_0_9_1_0 [0..1];
+evolve int decision_0_9_1_1 [0..1];
+evolve int decision_0_10_0_0 [0..1];
+evolve int decision_0_10_0_1 [0..1];
+evolve int decision_0_10_1_0 [0..1];
+evolve int decision_0_10_1_1 [0..1];
+evolve int decision_1_0_0_0 [0..1];
+evolve int decision_1_0_0_1 [0..1];
+evolve int decision_1_0_1_0 [0..1];
+evolve int decision_1_0_1_1 [0..1];
+evolve int decision_1_1_0_0 [0..1];
+evolve int decision_1_1_0_1 [0..1];
+evolve int decision_1_1_1_0 [0..1];
+evolve int decision_1_1_1_1 [0..1];
+evolve int decision_1_2_0_0 [0..1];
+evolve int decision_1_2_0_1 [0..1];
+evolve int decision_1_2_1_0 [0..1];
+evolve int decision_1_2_1_1 [0..1];
+evolve int decision_1_3_0_0 [0..1];
+evolve int decision_1_3_0_1 [0..1];
+evolve int decision_1_3_1_0 [0..1];
+evolve int decision_1_3_1_1 [0..1];
+evolve int decision_1_4_0_0 [0..1];
+evolve int decision_1_4_0_1 [0..1];
+evolve int decision_1_4_1_0 [0..1];
+evolve int decision_1_4_1_1 [0..1];
+evolve int decision_1_5_0_0 [0..1];
+evolve int decision_1_5_0_1 [0..1];
+evolve int decision_1_5_1_0 [0..1];
+evolve int decision_1_5_1_1 [0..1];
+evolve int decision_1_6_0_0 [0..1];
+evolve int decision_1_6_0_1 [0..1];
+evolve int decision_1_6_1_0 [0..1];
+evolve int decision_1_6_1_1 [0..1];
+evolve int decision_1_7_0_0 [0..1];
+evolve int decision_1_7_0_1 [0..1];
+evolve int decision_1_7_1_0 [0..1];
+evolve int decision_1_7_1_1 [0..1];
+evolve int decision_1_8_0_0 [0..1];
+evolve int decision_1_8_0_1 [0..1];
+evolve int decision_1_8_1_0 [0..1];
+evolve int decision_1_8_1_1 [0..1];
+evolve int decision_1_9_0_0 [0..1];
+evolve int decision_1_9_0_1 [0..1];
+evolve int decision_1_9_1_0 [0..1];
+evolve int decision_1_9_1_1 [0..1];
+evolve int decision_1_10_0_0 [0..1];
+evolve int decision_1_10_0_1 [0..1];
+evolve int decision_1_10_1_0 [0..1];
+evolve int decision_1_10_1_1 [0..1];
+evolve int decision_2_0_0_0 [0..1];
+evolve int decision_2_0_0_1 [0..1];
+evolve int decision_2_0_1_0 [0..1];
+evolve int decision_2_0_1_1 [0..1];
+evolve int decision_2_1_0_0 [0..1];
+evolve int decision_2_1_0_1 [0..1];
+evolve int decision_2_1_1_0 [0..1];
+evolve int decision_2_1_1_1 [0..1];
+evolve int decision_2_2_0_0 [0..1];
+evolve int decision_2_2_0_1 [0..1];
+evolve int decision_2_2_1_0 [0..1];
+evolve int decision_2_2_1_1 [0..1];
+evolve int decision_2_3_0_0 [0..1];
+evolve int decision_2_3_0_1 [0..1];
+evolve int decision_2_3_1_0 [0..1];
+evolve int decision_2_3_1_1 [0..1];
+evolve int decision_2_4_0_0 [0..1];
+evolve int decision_2_4_0_1 [0..1];
+evolve int decision_2_4_1_0 [0..1];
+evolve int decision_2_4_1_1 [0..1];
+evolve int decision_2_5_0_0 [0..1];
+evolve int decision_2_5_0_1 [0..1];
+evolve int decision_2_5_1_0 [0..1];
+evolve int decision_2_5_1_1 [0..1];
+evolve int decision_2_6_0_0 [0..1];
+evolve int decision_2_6_0_1 [0..1];
+evolve int decision_2_6_1_0 [0..1];
+evolve int decision_2_6_1_1 [0..1];
+evolve int decision_2_7_0_0 [0..1];
+evolve int decision_2_7_0_1 [0..1];
+evolve int decision_2_7_1_0 [0..1];
+evolve int decision_2_7_1_1 [0..1];
+evolve int decision_2_8_0_0 [0..1];
+evolve int decision_2_8_0_1 [0..1];
+evolve int decision_2_8_1_0 [0..1];
+evolve int decision_2_8_1_1 [0..1];
+evolve int decision_2_9_0_0 [0..1];
+evolve int decision_2_9_0_1 [0..1];
+evolve int decision_2_9_1_0 [0..1];
+evolve int decision_2_9_1_1 [0..1];
+evolve int decision_2_10_0_0 [0..1];
+evolve int decision_2_10_0_1 [0..1];
+evolve int decision_2_10_1_0 [0..1];
+evolve int decision_2_10_1_1 [0..1];
+const int zero = 0;
+const int one = 1;
+module UMC
+  [no_update] (zero=decision_0_0_0_0) & (time_status=0) & (ahat=0) & (bhat=0) & (confidence=0) -> true;
+  [no_update] (zero=decision_0_0_0_1) & (time_status=0) & (ahat=0) & (bhat=0) & (confidence=1) -> true;
+  [no_update] (zero=decision_0_0_1_0) & (time_status=0) & (ahat=0) & (bhat=1) & (confidence=0) -> true;
+  [no_update] (zero=decision_0_0_1_1) & (time_status=0) & (ahat=0) & (bhat=1) & (confidence=1) -> true;
+  [no_update] (zero=decision_0_1_0_0) & (time_status=0) & (ahat=1) & (bhat=0) & (confidence=0) -> true;
+  [no_update] (zero=decision_0_1_0_1) & (time_status=0) & (ahat=1) & (bhat=0) & (confidence=1) -> true;
+  [no_update] (zero=decision_0_1_1_0) & (time_status=0) & (ahat=1) & (bhat=1) & (confidence=0) -> true;
+  [no_update] (zero=decision_0_1_1_1) & (time_status=0) & (ahat=1) & (bhat=1) & (confidence=1) -> true;
+  [no_update] (zero=decision_0_2_0_0) & (time_status=0) & (ahat=2) & (bhat=0) & (confidence=0) -> true;
+  [no_update] (zero=decision_0_2_0_1) & (time_status=0) & (ahat=2) & (bhat=0) & (confidence=1) -> true;
+  [no_update] (zero=decision_0_2_1_0) & (time_status=0) & (ahat=2) & (bhat=1) & (confidence=0) -> true;
+  [no_update] (zero=decision_0_2_1_1) & (time_status=0) & (ahat=2) & (bhat=1) & (confidence=1) -> true;
+  [no_update] (zero=decision_0_3_0_0) & (time_status=0) & (ahat=3) & (bhat=0) & (confidence=0) -> true;
+  [no_update] (zero=decision_0_3_0_1) & (time_status=0) & (ahat=3) & (bhat=0) & (confidence=1) -> true;
+  [no_update] (zero=decision_0_3_1_0) & (time_status=0) & (ahat=3) & (bhat=1) & (confidence=0) -> true;
+  [no_update] (zero=decision_0_3_1_1) & (time_status=0) & (ahat=3) & (bhat=1) & (confidence=1) -> true;
+  [no_update] (zero=decision_0_4_0_0) & (time_status=0) & (ahat=4) & (bhat=0) & (confidence=0) -> true;
+  [no_update] (zero=decision_0_4_0_1) & (time_status=0) & (ahat=4) & (bhat=0) & (confidence=1) -> true;
+  [no_update] (zero=decision_0_4_1_0) & (time_status=0) & (ahat=4) & (bhat=1) & (confidence=0) -> true;
+  [no_update] (zero=decision_0_4_1_1) & (time_status=0) & (ahat=4) & (bhat=1) & (confidence=1) -> true;
+  [no_update] (zero=decision_0_5_0_0) & (time_status=0) & (ahat=5) & (bhat=0) & (confidence=0) -> true;
+  [no_update] (zero=decision_0_5_0_1) & (time_status=0) & (ahat=5) & (bhat=0) & (confidence=1) -> true;
+  [no_update] (zero=decision_0_5_1_0) & (time_status=0) & (ahat=5) & (bhat=1) & (confidence=0) -> true;
+  [no_update] (zero=decision_0_5_1_1) & (time_status=0) & (ahat=5) & (bhat=1) & (confidence=1) -> true;
+  [no_update] (zero=decision_0_6_0_0) & (time_status=0) & (ahat=6) & (bhat=0) & (confidence=0) -> true;
+  [no_update] (zero=decision_0_6_0_1) & (time_status=0) & (ahat=6) & (bhat=0) & (confidence=1) -> true;
+  [no_update] (zero=decision_0_6_1_0) & (time_status=0) & (ahat=6) & (bhat=1) & (confidence=0) -> true;
+  [no_update] (zero=decision_0_6_1_1) & (time_status=0) & (ahat=6) & (bhat=1) & (confidence=1) -> true;
+  [no_update] (zero=decision_0_7_0_0) & (time_status=0) & (ahat=7) & (bhat=0) & (confidence=0) -> true;
+  [no_update] (zero=decision_0_7_0_1) & (time_status=0) & (ahat=7) & (bhat=0) & (confidence=1) -> true;
+  [no_update] (zero=decision_0_7_1_0) & (time_status=0) & (ahat=7) & (bhat=1) & (confidence=0) -> true;
+  [no_update] (zero=decision_0_7_1_1) & (time_status=0) & (ahat=7) & (bhat=1) & (confidence=1) -> true;
+  [no_update] (zero=decision_0_8_0_0) & (time_status=0) & (ahat=8) & (bhat=0) & (confidence=0) -> true;
+  [no_update] (zero=decision_0_8_0_1) & (time_status=0) & (ahat=8) & (bhat=0) & (confidence=1) -> true;
+  [no_update] (zero=decision_0_8_1_0) & (time_status=0) & (ahat=8) & (bhat=1) & (confidence=0) -> true;
+  [no_update] (zero=decision_0_8_1_1) & (time_status=0) & (ahat=8) & (bhat=1) & (confidence=1) -> true;
+  [no_update] (zero=decision_0_9_0_0) & (time_status=0) & (ahat=9) & (bhat=0) & (confidence=0) -> true;
+  [no_update] (zero=decision_0_9_0_1) & (time_status=0) & (ahat=9) & (bhat=0) & (confidence=1) -> true;
+  [no_update] (zero=decision_0_9_1_0) & (time_status=0) & (ahat=9) & (bhat=1) & (confidence=0) -> true;
+  [no_update] (zero=decision_0_9_1_1) & (time_status=0) & (ahat=9) & (bhat=1) & (confidence=1) -> true;
+  [no_update] (zero=decision_0_10_0_0) & (time_status=0) & (ahat=10) & (bhat=0) & (confidence=0) -> true;
+  [no_update] (zero=decision_0_10_0_1) & (time_status=0) & (ahat=10) & (bhat=0) & (confidence=1) -> true;
+  [no_update] (zero=decision_0_10_1_0) & (time_status=0) & (ahat=10) & (bhat=1) & (confidence=0) -> true;
+  [no_update] (zero=decision_0_10_1_1) & (time_status=0) & (ahat=10) & (bhat=1) & (confidence=1) -> true;
+  [no_update] (zero=decision_1_0_0_0) & (time_status=1) & (ahat=0) & (bhat=0) & (confidence=0) -> true;
+  [no_update] (zero=decision_1_0_0_1) & (time_status=1) & (ahat=0) & (bhat=0) & (confidence=1) -> true;
+  [no_update] (zero=decision_1_0_1_0) & (time_status=1) & (ahat=0) & (bhat=1) & (confidence=0) -> true;
+  [no_update] (zero=decision_1_0_1_1) & (time_status=1) & (ahat=0) & (bhat=1) & (confidence=1) -> true;
+  [no_update] (zero=decision_1_1_0_0) & (time_status=1) & (ahat=1) & (bhat=0) & (confidence=0) -> true;
+  [no_update] (zero=decision_1_1_0_1) & (time_status=1) & (ahat=1) & (bhat=0) & (confidence=1) -> true;
+  [no_update] (zero=decision_1_1_1_0) & (time_status=1) & (ahat=1) & (bhat=1) & (confidence=0) -> true;
+  [no_update] (zero=decision_1_1_1_1) & (time_status=1) & (ahat=1) & (bhat=1) & (confidence=1) -> true;
+  [no_update] (zero=decision_1_2_0_0) & (time_status=1) & (ahat=2) & (bhat=0) & (confidence=0) -> true;
+  [no_update] (zero=decision_1_2_0_1) & (time_status=1) & (ahat=2) & (bhat=0) & (confidence=1) -> true;
+  [no_update] (zero=decision_1_2_1_0) & (time_status=1) & (ahat=2) & (bhat=1) & (confidence=0) -> true;
+  [no_update] (zero=decision_1_2_1_1) & (time_status=1) & (ahat=2) & (bhat=1) & (confidence=1) -> true;
+  [no_update] (zero=decision_1_3_0_0) & (time_status=1) & (ahat=3) & (bhat=0) & (confidence=0) -> true;
+  [no_update] (zero=decision_1_3_0_1) & (time_status=1) & (ahat=3) & (bhat=0) & (confidence=1) -> true;
+  [no_update] (zero=decision_1_3_1_0) & (time_status=1) & (ahat=3) & (bhat=1) & (confidence=0) -> true;
+  [no_update] (zero=decision_1_3_1_1) & (time_status=1) & (ahat=3) & (bhat=1) & (confidence=1) -> true;
+  [no_update] (zero=decision_1_4_0_0) & (time_status=1) & (ahat=4) & (bhat=0) & (confidence=0) -> true;
+  [no_update] (zero=decision_1_4_0_1) & (time_status=1) & (ahat=4) & (bhat=0) & (confidence=1) -> true;
+  [no_update] (zero=decision_1_4_1_0) & (time_status=1) & (ahat=4) & (bhat=1) & (confidence=0) -> true;
+  [no_update] (zero=decision_1_4_1_1) & (time_status=1) & (ahat=4) & (bhat=1) & (confidence=1) -> true;
+  [no_update] (zero=decision_1_5_0_0) & (time_status=1) & (ahat=5) & (bhat=0) & (confidence=0) -> true;
+  [no_update] (zero=decision_1_5_0_1) & (time_status=1) & (ahat=5) & (bhat=0) & (confidence=1) -> true;
+  [no_update] (zero=decision_1_5_1_0) & (time_status=1) & (ahat=5) & (bhat=1) & (confidence=0) -> true;
+  [no_update] (zero=decision_1_5_1_1) & (time_status=1) & (ahat=5) & (bhat=1) & (confidence=1) -> true;
+  [no_update] (zero=decision_1_6_0_0) & (time_status=1) & (ahat=6) & (bhat=0) & (confidence=0) -> true;
+  [no_update] (zero=decision_1_6_0_1) & (time_status=1) & (ahat=6) & (bhat=0) & (confidence=1) -> true;
+  [no_update] (zero=decision_1_6_1_0) & (time_status=1) & (ahat=6) & (bhat=1) & (confidence=0) -> true;
+  [no_update] (zero=decision_1_6_1_1) & (time_status=1) & (ahat=6) & (bhat=1) & (confidence=1) -> true;
+  [no_update] (zero=decision_1_7_0_0) & (time_status=1) & (ahat=7) & (bhat=0) & (confidence=0) -> true;
+  [no_update] (zero=decision_1_7_0_1) & (time_status=1) & (ahat=7) & (bhat=0) & (confidence=1) -> true;
+  [no_update] (zero=decision_1_7_1_0) & (time_status=1) & (ahat=7) & (bhat=1) & (confidence=0) -> true;
+  [no_update] (zero=decision_1_7_1_1) & (time_status=1) & (ahat=7) & (bhat=1) & (confidence=1) -> true;
+  [no_update] (zero=decision_1_8_0_0) & (time_status=1) & (ahat=8) & (bhat=0) & (confidence=0) -> true;
+  [no_update] (zero=decision_1_8_0_1) & (time_status=1) & (ahat=8) & (bhat=0) & (confidence=1) -> true;
+  [no_update] (zero=decision_1_8_1_0) & (time_status=1) & (ahat=8) & (bhat=1) & (confidence=0) -> true;
+  [no_update] (zero=decision_1_8_1_1) & (time_status=1) & (ahat=8) & (bhat=1) & (confidence=1) -> true;
+  [no_update] (zero=decision_1_9_0_0) & (time_status=1) & (ahat=9) & (bhat=0) & (confidence=0) -> true;
+  [no_update] (zero=decision_1_9_0_1) & (time_status=1) & (ahat=9) & (bhat=0) & (confidence=1) -> true;
+  [no_update] (zero=decision_1_9_1_0) & (time_status=1) & (ahat=9) & (bhat=1) & (confidence=0) -> true;
+  [no_update] (zero=decision_1_9_1_1) & (time_status=1) & (ahat=9) & (bhat=1) & (confidence=1) -> true;
+  [no_update] (zero=decision_1_10_0_0) & (time_status=1) & (ahat=10) & (bhat=0) & (confidence=0) -> true;
+  [no_update] (zero=decision_1_10_0_1) & (time_status=1) & (ahat=10) & (bhat=0) & (confidence=1) -> true;
+  [no_update] (zero=decision_1_10_1_0) & (time_status=1) & (ahat=10) & (bhat=1) & (confidence=0) -> true;
+  [no_update] (zero=decision_1_10_1_1) & (time_status=1) & (ahat=10) & (bhat=1) & (confidence=1) -> true;
+  [no_update] (zero=decision_2_0_0_0) & (time_status=2) & (ahat=0) & (bhat=0) & (confidence=0) -> true;
+  [no_update] (zero=decision_2_0_0_1) & (time_status=2) & (ahat=0) & (bhat=0) & (confidence=1) -> true;
+  [no_update] (zero=decision_2_0_1_0) & (time_status=2) & (ahat=0) & (bhat=1) & (confidence=0) -> true;
+  [no_update] (zero=decision_2_0_1_1) & (time_status=2) & (ahat=0) & (bhat=1) & (confidence=1) -> true;
+  [no_update] (zero=decision_2_1_0_0) & (time_status=2) & (ahat=1) & (bhat=0) & (confidence=0) -> true;
+  [no_update] (zero=decision_2_1_0_1) & (time_status=2) & (ahat=1) & (bhat=0) & (confidence=1) -> true;
+  [no_update] (zero=decision_2_1_1_0) & (time_status=2) & (ahat=1) & (bhat=1) & (confidence=0) -> true;
+  [no_update] (zero=decision_2_1_1_1) & (time_status=2) & (ahat=1) & (bhat=1) & (confidence=1) -> true;
+  [no_update] (zero=decision_2_2_0_0) & (time_status=2) & (ahat=2) & (bhat=0) & (confidence=0) -> true;
+  [no_update] (zero=decision_2_2_0_1) & (time_status=2) & (ahat=2) & (bhat=0) & (confidence=1) -> true;
+  [no_update] (zero=decision_2_2_1_0) & (time_status=2) & (ahat=2) & (bhat=1) & (confidence=0) -> true;
+  [no_update] (zero=decision_2_2_1_1) & (time_status=2) & (ahat=2) & (bhat=1) & (confidence=1) -> true;
+  [no_update] (zero=decision_2_3_0_0) & (time_status=2) & (ahat=3) & (bhat=0) & (confidence=0) -> true;
+  [no_update] (zero=decision_2_3_0_1) & (time_status=2) & (ahat=3) & (bhat=0) & (confidence=1) -> true;
+  [no_update] (zero=decision_2_3_1_0) & (time_status=2) & (ahat=3) & (bhat=1) & (confidence=0) -> true;
+  [no_update] (zero=decision_2_3_1_1) & (time_status=2) & (ahat=3) & (bhat=1) & (confidence=1) -> true;
+  [no_update] (zero=decision_2_4_0_0) & (time_status=2) & (ahat=4) & (bhat=0) & (confidence=0) -> true;
+  [no_update] (zero=decision_2_4_0_1) & (time_status=2) & (ahat=4) & (bhat=0) & (confidence=1) -> true;
+  [no_update] (zero=decision_2_4_1_0) & (time_status=2) & (ahat=4) & (bhat=1) & (confidence=0) -> true;
+  [no_update] (zero=decision_2_4_1_1) & (time_status=2) & (ahat=4) & (bhat=1) & (confidence=1) -> true;
+  [no_update] (zero=decision_2_5_0_0) & (time_status=2) & (ahat=5) & (bhat=0) & (confidence=0) -> true;
+  [no_update] (zero=decision_2_5_0_1) & (time_status=2) & (ahat=5) & (bhat=0) & (confidence=1) -> true;
+  [no_update] (zero=decision_2_5_1_0) & (time_status=2) & (ahat=5) & (bhat=1) & (confidence=0) -> true;
+  [no_update] (zero=decision_2_5_1_1) & (time_status=2) & (ahat=5) & (bhat=1) & (confidence=1) -> true;
+  [no_update] (zero=decision_2_6_0_0) & (time_status=2) & (ahat=6) & (bhat=0) & (confidence=0) -> true;
+  [no_update] (zero=decision_2_6_0_1) & (time_status=2) & (ahat=6) & (bhat=0) & (confidence=1) -> true;
+  [no_update] (zero=decision_2_6_1_0) & (time_status=2) & (ahat=6) & (bhat=1) & (confidence=0) -> true;
+  [no_update] (zero=decision_2_6_1_1) & (time_status=2) & (ahat=6) & (bhat=1) & (confidence=1) -> true;
+  [no_update] (zero=decision_2_7_0_0) & (time_status=2) & (ahat=7) & (bhat=0) & (confidence=0) -> true;
+  [no_update] (zero=decision_2_7_0_1) & (time_status=2) & (ahat=7) & (bhat=0) & (confidence=1) -> true;
+  [no_update] (zero=decision_2_7_1_0) & (time_status=2) & (ahat=7) & (bhat=1) & (confidence=0) -> true;
+  [no_update] (zero=decision_2_7_1_1) & (time_status=2) & (ahat=7) & (bhat=1) & (confidence=1) -> true;
+  [no_update] (zero=decision_2_8_0_0) & (time_status=2) & (ahat=8) & (bhat=0) & (confidence=0) -> true;
+  [no_update] (zero=decision_2_8_0_1) & (time_status=2) & (ahat=8) & (bhat=0) & (confidence=1) -> true;
+  [no_update] (zero=decision_2_8_1_0) & (time_status=2) & (ahat=8) & (bhat=1) & (confidence=0) -> true;
+  [no_update] (zero=decision_2_8_1_1) & (time_status=2) & (ahat=8) & (bhat=1) & (confidence=1) -> true;
+  [no_update] (zero=decision_2_9_0_0) & (time_status=2) & (ahat=9) & (bhat=0) & (confidence=0) -> true;
+  [no_update] (zero=decision_2_9_0_1) & (time_status=2) & (ahat=9) & (bhat=0) & (confidence=1) -> true;
+  [no_update] (zero=decision_2_9_1_0) & (time_status=2) & (ahat=9) & (bhat=1) & (confidence=0) -> true;
+  [no_update] (zero=decision_2_9_1_1) & (time_status=2) & (ahat=9) & (bhat=1) & (confidence=1) -> true;
+  [no_update] (zero=decision_2_10_0_0) & (time_status=2) & (ahat=10) & (bhat=0) & (confidence=0) -> true;
+  [no_update] (zero=decision_2_10_0_1) & (time_status=2) & (ahat=10) & (bhat=0) & (confidence=1) -> true;
+  [no_update] (zero=decision_2_10_1_0) & (time_status=2) & (ahat=10) & (bhat=1) & (confidence=0) -> true;
+  [no_update] (zero=decision_2_10_1_1) & (time_status=2) & (ahat=10) & (bhat=1) & (confidence=1) -> true;
+  [update] (one=decision_0_0_0_0) & (time_status=0) & (ahat=0) & (bhat=0) & (confidence=0) -> true;
+  [update] (one=decision_0_0_0_1) & (time_status=0) & (ahat=0) & (bhat=0) & (confidence=1) -> true;
+  [update] (one=decision_0_0_1_0) & (time_status=0) & (ahat=0) & (bhat=1) & (confidence=0) -> true;
+  [update] (one=decision_0_0_1_1) & (time_status=0) & (ahat=0) & (bhat=1) & (confidence=1) -> true;
+  [update] (one=decision_0_1_0_0) & (time_status=0) & (ahat=1) & (bhat=0) & (confidence=0) -> true;
+  [update] (one=decision_0_1_0_1) & (time_status=0) & (ahat=1) & (bhat=0) & (confidence=1) -> true;
+  [update] (one=decision_0_1_1_0) & (time_status=0) & (ahat=1) & (bhat=1) & (confidence=0) -> true;
+  [update] (one=decision_0_1_1_1) & (time_status=0) & (ahat=1) & (bhat=1) & (confidence=1) -> true;
+  [update] (one=decision_0_2_0_0) & (time_status=0) & (ahat=2) & (bhat=0) & (confidence=0) -> true;
+  [update] (one=decision_0_2_0_1) & (time_status=0) & (ahat=2) & (bhat=0) & (confidence=1) -> true;
+  [update] (one=decision_0_2_1_0) & (time_status=0) & (ahat=2) & (bhat=1) & (confidence=0) -> true;
+  [update] (one=decision_0_2_1_1) & (time_status=0) & (ahat=2) & (bhat=1) & (confidence=1) -> true;
+  [update] (one=decision_0_3_0_0) & (time_status=0) & (ahat=3) & (bhat=0) & (confidence=0) -> true;
+  [update] (one=decision_0_3_0_1) & (time_status=0) & (ahat=3) & (bhat=0) & (confidence=1) -> true;
+  [update] (one=decision_0_3_1_0) & (time_status=0) & (ahat=3) & (bhat=1) & (confidence=0) -> true;
+  [update] (one=decision_0_3_1_1) & (time_status=0) & (ahat=3) & (bhat=1) & (confidence=1) -> true;
+  [update] (one=decision_0_4_0_0) & (time_status=0) & (ahat=4) & (bhat=0) & (confidence=0) -> true;
+  [update] (one=decision_0_4_0_1) & (time_status=0) & (ahat=4) & (bhat=0) & (confidence=1) -> true;
+  [update] (one=decision_0_4_1_0) & (time_status=0) & (ahat=4) & (bhat=1) & (confidence=0) -> true;
+  [update] (one=decision_0_4_1_1) & (time_status=0) & (ahat=4) & (bhat=1) & (confidence=1) -> true;
+  [update] (one=decision_0_5_0_0) & (time_status=0) & (ahat=5) & (bhat=0) & (confidence=0) -> true;
+  [update] (one=decision_0_5_0_1) & (time_status=0) & (ahat=5) & (bhat=0) & (confidence=1) -> true;
+  [update] (one=decision_0_5_1_0) & (time_status=0) & (ahat=5) & (bhat=1) & (confidence=0) -> true;
+  [update] (one=decision_0_5_1_1) & (time_status=0) & (ahat=5) & (bhat=1) & (confidence=1) -> true;
+  [update] (one=decision_0_6_0_0) & (time_status=0) & (ahat=6) & (bhat=0) & (confidence=0) -> true;
+  [update] (one=decision_0_6_0_1) & (time_status=0) & (ahat=6) & (bhat=0) & (confidence=1) -> true;
+  [update] (one=decision_0_6_1_0) & (time_status=0) & (ahat=6) & (bhat=1) & (confidence=0) -> true;
+  [update] (one=decision_0_6_1_1) & (time_status=0) & (ahat=6) & (bhat=1) & (confidence=1) -> true;
+  [update] (one=decision_0_7_0_0) & (time_status=0) & (ahat=7) & (bhat=0) & (confidence=0) -> true;
+  [update] (one=decision_0_7_0_1) & (time_status=0) & (ahat=7) & (bhat=0) & (confidence=1) -> true;
+  [update] (one=decision_0_7_1_0) & (time_status=0) & (ahat=7) & (bhat=1) & (confidence=0) -> true;
+  [update] (one=decision_0_7_1_1) & (time_status=0) & (ahat=7) & (bhat=1) & (confidence=1) -> true;
+  [update] (one=decision_0_8_0_0) & (time_status=0) & (ahat=8) & (bhat=0) & (confidence=0) -> true;
+  [update] (one=decision_0_8_0_1) & (time_status=0) & (ahat=8) & (bhat=0) & (confidence=1) -> true;
+  [update] (one=decision_0_8_1_0) & (time_status=0) & (ahat=8) & (bhat=1) & (confidence=0) -> true;
+  [update] (one=decision_0_8_1_1) & (time_status=0) & (ahat=8) & (bhat=1) & (confidence=1) -> true;
+  [update] (one=decision_0_9_0_0) & (time_status=0) & (ahat=9) & (bhat=0) & (confidence=0) -> true;
+  [update] (one=decision_0_9_0_1) & (time_status=0) & (ahat=9) & (bhat=0) & (confidence=1) -> true;
+  [update] (one=decision_0_9_1_0) & (time_status=0) & (ahat=9) & (bhat=1) & (confidence=0) -> true;
+  [update] (one=decision_0_9_1_1) & (time_status=0) & (ahat=9) & (bhat=1) & (confidence=1) -> true;
+  [update] (one=decision_0_10_0_0) & (time_status=0) & (ahat=10) & (bhat=0) & (confidence=0) -> true;
+  [update] (one=decision_0_10_0_1) & (time_status=0) & (ahat=10) & (bhat=0) & (confidence=1) -> true;
+  [update] (one=decision_0_10_1_0) & (time_status=0) & (ahat=10) & (bhat=1) & (confidence=0) -> true;
+  [update] (one=decision_0_10_1_1) & (time_status=0) & (ahat=10) & (bhat=1) & (confidence=1) -> true;
+  [update] (one=decision_1_0_0_0) & (time_status=1) & (ahat=0) & (bhat=0) & (confidence=0) -> true;
+  [update] (one=decision_1_0_0_1) & (time_status=1) & (ahat=0) & (bhat=0) & (confidence=1) -> true;
+  [update] (one=decision_1_0_1_0) & (time_status=1) & (ahat=0) & (bhat=1) & (confidence=0) -> true;
+  [update] (one=decision_1_0_1_1) & (time_status=1) & (ahat=0) & (bhat=1) & (confidence=1) -> true;
+  [update] (one=decision_1_1_0_0) & (time_status=1) & (ahat=1) & (bhat=0) & (confidence=0) -> true;
+  [update] (one=decision_1_1_0_1) & (time_status=1) & (ahat=1) & (bhat=0) & (confidence=1) -> true;
+  [update] (one=decision_1_1_1_0) & (time_status=1) & (ahat=1) & (bhat=1) & (confidence=0) -> true;
+  [update] (one=decision_1_1_1_1) & (time_status=1) & (ahat=1) & (bhat=1) & (confidence=1) -> true;
+  [update] (one=decision_1_2_0_0) & (time_status=1) & (ahat=2) & (bhat=0) & (confidence=0) -> true;
+  [update] (one=decision_1_2_0_1) & (time_status=1) & (ahat=2) & (bhat=0) & (confidence=1) -> true;
+  [update] (one=decision_1_2_1_0) & (time_status=1) & (ahat=2) & (bhat=1) & (confidence=0) -> true;
+  [update] (one=decision_1_2_1_1) & (time_status=1) & (ahat=2) & (bhat=1) & (confidence=1) -> true;
+  [update] (one=decision_1_3_0_0) & (time_status=1) & (ahat=3) & (bhat=0) & (confidence=0) -> true;
+  [update] (one=decision_1_3_0_1) & (time_status=1) & (ahat=3) & (bhat=0) & (confidence=1) -> true;
+  [update] (one=decision_1_3_1_0) & (time_status=1) & (ahat=3) & (bhat=1) & (confidence=0) -> true;
+  [update] (one=decision_1_3_1_1) & (time_status=1) & (ahat=3) & (bhat=1) & (confidence=1) -> true;
+  [update] (one=decision_1_4_0_0) & (time_status=1) & (ahat=4) & (bhat=0) & (confidence=0) -> true;
+  [update] (one=decision_1_4_0_1) & (time_status=1) & (ahat=4) & (bhat=0) & (confidence=1) -> true;
+  [update] (one=decision_1_4_1_0) & (time_status=1) & (ahat=4) & (bhat=1) & (confidence=0) -> true;
+  [update] (one=decision_1_4_1_1) & (time_status=1) & (ahat=4) & (bhat=1) & (confidence=1) -> true;
+  [update] (one=decision_1_5_0_0) & (time_status=1) & (ahat=5) & (bhat=0) & (confidence=0) -> true;
+  [update] (one=decision_1_5_0_1) & (time_status=1) & (ahat=5) & (bhat=0) & (confidence=1) -> true;
+  [update] (one=decision_1_5_1_0) & (time_status=1) & (ahat=5) & (bhat=1) & (confidence=0) -> true;
+  [update] (one=decision_1_5_1_1) & (time_status=1) & (ahat=5) & (bhat=1) & (confidence=1) -> true;
+  [update] (one=decision_1_6_0_0) & (time_status=1) & (ahat=6) & (bhat=0) & (confidence=0) -> true;
+  [update] (one=decision_1_6_0_1) & (time_status=1) & (ahat=6) & (bhat=0) & (confidence=1) -> true;
+  [update] (one=decision_1_6_1_0) & (time_status=1) & (ahat=6) & (bhat=1) & (confidence=0) -> true;
+  [update] (one=decision_1_6_1_1) & (time_status=1) & (ahat=6) & (bhat=1) & (confidence=1) -> true;
+  [update] (one=decision_1_7_0_0) & (time_status=1) & (ahat=7) & (bhat=0) & (confidence=0) -> true;
+  [update] (one=decision_1_7_0_1) & (time_status=1) & (ahat=7) & (bhat=0) & (confidence=1) -> true;
+  [update] (one=decision_1_7_1_0) & (time_status=1) & (ahat=7) & (bhat=1) & (confidence=0) -> true;
+  [update] (one=decision_1_7_1_1) & (time_status=1) & (ahat=7) & (bhat=1) & (confidence=1) -> true;
+  [update] (one=decision_1_8_0_0) & (time_status=1) & (ahat=8) & (bhat=0) & (confidence=0) -> true;
+  [update] (one=decision_1_8_0_1) & (time_status=1) & (ahat=8) & (bhat=0) & (confidence=1) -> true;
+  [update] (one=decision_1_8_1_0) & (time_status=1) & (ahat=8) & (bhat=1) & (confidence=0) -> true;
+  [update] (one=decision_1_8_1_1) & (time_status=1) & (ahat=8) & (bhat=1) & (confidence=1) -> true;
+  [update] (one=decision_1_9_0_0) & (time_status=1) & (ahat=9) & (bhat=0) & (confidence=0) -> true;
+  [update] (one=decision_1_9_0_1) & (time_status=1) & (ahat=9) & (bhat=0) & (confidence=1) -> true;
+  [update] (one=decision_1_9_1_0) & (time_status=1) & (ahat=9) & (bhat=1) & (confidence=0) -> true;
+  [update] (one=decision_1_9_1_1) & (time_status=1) & (ahat=9) & (bhat=1) & (confidence=1) -> true;
+  [update] (one=decision_1_10_0_0) & (time_status=1) & (ahat=10) & (bhat=0) & (confidence=0) -> true;
+  [update] (one=decision_1_10_0_1) & (time_status=1) & (ahat=10) & (bhat=0) & (confidence=1) -> true;
+  [update] (one=decision_1_10_1_0) & (time_status=1) & (ahat=10) & (bhat=1) & (confidence=0) -> true;
+  [update] (one=decision_1_10_1_1) & (time_status=1) & (ahat=10) & (bhat=1) & (confidence=1) -> true;
+  [update] (one=decision_2_0_0_0) & (time_status=2) & (ahat=0) & (bhat=0) & (confidence=0) -> true;
+  [update] (one=decision_2_0_0_1) & (time_status=2) & (ahat=0) & (bhat=0) & (confidence=1) -> true;
+  [update] (one=decision_2_0_1_0) & (time_status=2) & (ahat=0) & (bhat=1) & (confidence=0) -> true;
+  [update] (one=decision_2_0_1_1) & (time_status=2) & (ahat=0) & (bhat=1) & (confidence=1) -> true;
+  [update] (one=decision_2_1_0_0) & (time_status=2) & (ahat=1) & (bhat=0) & (confidence=0) -> true;
+  [update] (one=decision_2_1_0_1) & (time_status=2) & (ahat=1) & (bhat=0) & (confidence=1) -> true;
+  [update] (one=decision_2_1_1_0) & (time_status=2) & (ahat=1) & (bhat=1) & (confidence=0) -> true;
+  [update] (one=decision_2_1_1_1) & (time_status=2) & (ahat=1) & (bhat=1) & (confidence=1) -> true;
+  [update] (one=decision_2_2_0_0) & (time_status=2) & (ahat=2) & (bhat=0) & (confidence=0) -> true;
+  [update] (one=decision_2_2_0_1) & (time_status=2) & (ahat=2) & (bhat=0) & (confidence=1) -> true;
+  [update] (one=decision_2_2_1_0) & (time_status=2) & (ahat=2) & (bhat=1) & (confidence=0) -> true;
+  [update] (one=decision_2_2_1_1) & (time_status=2) & (ahat=2) & (bhat=1) & (confidence=1) -> true;
+  [update] (one=decision_2_3_0_0) & (time_status=2) & (ahat=3) & (bhat=0) & (confidence=0) -> true;
+  [update] (one=decision_2_3_0_1) & (time_status=2) & (ahat=3) & (bhat=0) & (confidence=1) -> true;
+  [update] (one=decision_2_3_1_0) & (time_status=2) & (ahat=3) & (bhat=1) & (confidence=0) -> true;
+  [update] (one=decision_2_3_1_1) & (time_status=2) & (ahat=3) & (bhat=1) & (confidence=1) -> true;
+  [update] (one=decision_2_4_0_0) & (time_status=2) & (ahat=4) & (bhat=0) & (confidence=0) -> true;
+  [update] (one=decision_2_4_0_1) & (time_status=2) & (ahat=4) & (bhat=0) & (confidence=1) -> true;
+  [update] (one=decision_2_4_1_0) & (time_status=2) & (ahat=4) & (bhat=1) & (confidence=0) -> true;
+  [update] (one=decision_2_4_1_1) & (time_status=2) & (ahat=4) & (bhat=1) & (confidence=1) -> true;
+  [update] (one=decision_2_5_0_0) & (time_status=2) & (ahat=5) & (bhat=0) & (confidence=0) -> true;
+  [update] (one=decision_2_5_0_1) & (time_status=2) & (ahat=5) & (bhat=0) & (confidence=1) -> true;
+  [update] (one=decision_2_5_1_0) & (time_status=2) & (ahat=5) & (bhat=1) & (confidence=0) -> true;
+  [update] (one=decision_2_5_1_1) & (time_status=2) & (ahat=5) & (bhat=1) & (confidence=1) -> true;
+  [update] (one=decision_2_6_0_0) & (time_status=2) & (ahat=6) & (bhat=0) & (confidence=0) -> true;
+  [update] (one=decision_2_6_0_1) & (time_status=2) & (ahat=6) & (bhat=0) & (confidence=1) -> true;
+  [update] (one=decision_2_6_1_0) & (time_status=2) & (ahat=6) & (bhat=1) & (confidence=0) -> true;
+  [update] (one=decision_2_6_1_1) & (time_status=2) & (ahat=6) & (bhat=1) & (confidence=1) -> true;
+  [update] (one=decision_2_7_0_0) & (time_status=2) & (ahat=7) & (bhat=0) & (confidence=0) -> true;
+  [update] (one=decision_2_7_0_1) & (time_status=2) & (ahat=7) & (bhat=0) & (confidence=1) -> true;
+  [update] (one=decision_2_7_1_0) & (time_status=2) & (ahat=7) & (bhat=1) & (confidence=0) -> true;
+  [update] (one=decision_2_7_1_1) & (time_status=2) & (ahat=7) & (bhat=1) & (confidence=1) -> true;
+  [update] (one=decision_2_8_0_0) & (time_status=2) & (ahat=8) & (bhat=0) & (confidence=0) -> true;
+  [update] (one=decision_2_8_0_1) & (time_status=2) & (ahat=8) & (bhat=0) & (confidence=1) -> true;
+  [update] (one=decision_2_8_1_0) & (time_status=2) & (ahat=8) & (bhat=1) & (confidence=0) -> true;
+  [update] (one=decision_2_8_1_1) & (time_status=2) & (ahat=8) & (bhat=1) & (confidence=1) -> true;
+  [update] (one=decision_2_9_0_0) & (time_status=2) & (ahat=9) & (bhat=0) & (confidence=0) -> true;
+  [update] (one=decision_2_9_0_1) & (time_status=2) & (ahat=9) & (bhat=0) & (confidence=1) -> true;
+  [update] (one=decision_2_9_1_0) & (time_status=2) & (ahat=9) & (bhat=1) & (confidence=0) -> true;
+  [update] (one=decision_2_9_1_1) & (time_status=2) & (ahat=9) & (bhat=1) & (confidence=1) -> true;
+  [update] (one=decision_2_10_0_0) & (time_status=2) & (ahat=10) & (bhat=0) & (confidence=0) -> true;
+  [update] (one=decision_2_10_0_1) & (time_status=2) & (ahat=10) & (bhat=0) & (confidence=1) -> true;
+  [update] (one=decision_2_10_1_0) & (time_status=2) & (ahat=10) & (bhat=1) & (confidence=0) -> true;
+  [update] (one=decision_2_10_1_1) & (time_status=2) & (ahat=10) & (bhat=1) & (confidence=1) -> true;
+endmodule
+
+module Turn
+  t : [0..2] init 0;
+  [check] (t=0) -> (t'=1);
+
+  [no_update] (t=1) -> (t'=2);
+  [update] (t=1) -> (t'=2);
+
+  [NOP] (t=2) -> (t'=0);
+  [restoreA] (t=2) -> (t'=0);
+  [restoreAB] (t=2) -> (t'=0);
+endmodule

@@ -1,0 +1,27 @@
+<?xml version="1.0" ?><sdf version="1.4">
+  <model name="box">
+    <static>true</static>
+    <pose>0 0 0.075 0 0 0</pose>
+    <link name="box">
+      <collision name="collision">
+        <geometry>
+          <box>
+            <size>1.0 1.0 0.5</size>
+          </box>
+        </geometry>
+      </collision>
+      <visual name="visual">
+        <material>
+            <ambient>0.0 0 0.0 1</ambient>
+            <diffuse>0.85 0.1 0.1 1</diffuse>
+            <specular>0.1 0.1 0.1 1</specular>
+        </material>
+        <geometry>
+          <box>
+            <size>1.0 1.0 0.5</size>
+          </box>
+        </geometry>
+      </visual>
+    </link>
+  </model>
+</sdf>

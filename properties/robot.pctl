@@ -1,0 +1,6 @@
+//Objective, max
+P=? [ F x=targetX & y=targetY ]
+
+//Objective, min
+R{"cost"}=? [ C <=200 ]
+

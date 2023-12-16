@@ -1,0 +1,31 @@
+<launch>
+
+    <!-- Box spawn -->
+    <!-- Template -->
+    <!-- <node name="spawn_obstacle_0" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen" args="-sdf -file $(find umc_turtlebot)/models/box_3x3/model.sdf -model box_0 -x 0.0 -y 0.0 -z 0.0"/> -->
+
+    <node name="spawn_obstacle_0" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen" args="-sdf -file $(find umc_turtlebot)/models/box_3x3/model.sdf -model box_0 -x 1.5 -y 10.5 -z 0.0"/>
+
+    <node name="spawn_obstacle_1" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen" args="-sdf -file $(find umc_turtlebot)/models/box_3x3/model.sdf -model box_1 -x 1.5 -y 13.5 -z 0.0"/>
+
+    <node name="spawn_obstacle_2" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen" args="-sdf -file $(find umc_turtlebot)/models/box_3x3/model.sdf -model box_2 -x 1.5 -y 16.5 -z 0.0"/>
+
+    <node name="spawn_obstacle_3" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen" args="-sdf -file $(find umc_turtlebot)/models/box_3x3/model.sdf -model box_3 -x 4.5 -y 10.5 -z 0.0"/>
+
+    <node name="spawn_obstacle_4" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen" args="-sdf -file $(find umc_turtlebot)/models/box_3x3/model.sdf -model box_4 -x 7.5 -y 10.5 -z 0.0"/>
+
+    <node name="spawn_obstacle_5" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen" args="-sdf -file $(find umc_turtlebot)/models/box_3x3/model.sdf -model box_5 -x 10.5 -y 10.5 -z 0.0"/>
+
+    <node name="spawn_obstacle_6" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen" args="-sdf -file $(find umc_turtlebot)/models/box_3x3/model.sdf -model box_6 -x 13.5 -y 1.5 -z 0.0"/>
+
+    <node name="spawn_obstacle_7" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen" args="-sdf -file $(find umc_turtlebot)/models/box_3x3/model.sdf -model box_7 -x 13.5 -y 4.5 -z 0.0"/>
+
+    <node name="spawn_obstacle_8" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen" args="-sdf -file $(find umc_turtlebot)/models/box_3x3/model.sdf -model box_8 -x 13.5 -y 13.5 -z 0.0"/>
+
+    <node name="spawn_obstacle_9" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen" args="-sdf -file $(find umc_turtlebot)/models/box_3x3/model.sdf -model box_9 -x 13.5 -y 19.5 -z 0.0"/>
+
+    <node name="spawn_obstacle_10" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen" args="-sdf -file $(find umc_turtlebot)/models/box_3x3/model.sdf -model box_10 -x 16.5 -y 4.5 -z 0.0"/>
+
+    <node name="spawn_obstacle_11" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen" args="-sdf -file $(find umc_turtlebot)/models/box_3x3/model.sdf -model box_11 -x 16.5 -y 19.5 -z 0.0"/>
+
+</launch>
