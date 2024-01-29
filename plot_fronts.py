@@ -50,7 +50,7 @@ def plot_pareto_front(m=10, replication=0, header=True):
 
     plt.figure(figsize=(8, 6))
 
-    plt.scatter(x_values, y_values, color='blue', label='UMC')
+    plt.scatter(x_values, y_values, color='blue', label='URC')
 
     # Add red crosses for the baseline
     plt.scatter(x_values_b, y_values_b, color='red', marker='x', label='Baseline')
@@ -65,5 +65,5 @@ def plot_pareto_front(m=10, replication=0, header=True):
     plt.grid(True)
 
     # Save the plot as an image file
-    plt.savefig('plots/fronts/' + output_filename)
+    plt.savefig('plots/fronts/' + output_filename + '.pdf')
     plt.close()

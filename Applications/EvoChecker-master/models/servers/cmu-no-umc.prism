@@ -1,0 +1,122 @@
+dtmc
+
+module Servers
+  //compromised?
+  a : [0..1] init 0;
+  b : [0..1] init 0;
+  step : [0..2] init 0;
+
+  //if a is working fine, it may become compromised
+  [attack] (step=0) & (a=0) -> 
+    0.7: (a'=0) & (step'=1) + 
+    0.3: (a'=1) & (step'=1);
+  [attack] (step=0) & (a=1) & (b=0) -> 
+    0.7: (b'=0) & (step'=1) + 
+    0.3: (b'=1) & (step'=1);
+  [attack] (step=0) & (a=1) & (b=1) -> (step'=1);
+
+  //check if B is offline as this will incur a cost of 500
+  [check] (step=1) -> (step'=2);
+
+  [NOP]       (step=2) -> (step'=0);
+  [restoreA]  (step=2) -> (step'=0) & (a'=0);
+  [restoreAB] (step=2) -> (step'=0) & (a'=0) & (b'=0);
+endmodule
+
+module Time
+  time : [0..23] init 0;
+  time_status : [0..2] init 0;
+  [attack] (time<8) -> (time'=time+1) & (time_status'=0);
+  [attack] (time>=8) & (time<17) -> (time'=time+1) & (time_status'=1);
+  [attack] (time>=17) & (time<23) -> (time'=time+1) & (time_status'=2);
+  [attack] (time>=23) -> (time'=0) & (time_status'=0);
+endmodule
+
+
+module Adaptation_MAPE_controller 
+  [NOP]       (ahat<3) -> true;
+  [restoreA]  (ahat>=3) & (bhat<1) -> true;
+  [restoreAB] (bhat=1) -> true;
+
+endmodule
+
+module Count
+  counter: [1..100];
+  [attack] counter<100 -> (counter'=counter+1);
+endmodule
+
+module Knowledge
+  //P(a compromised)
+  ahat : [0..10] init 0;
+  bhat : [0..1] init 0;
+  confidence : [0..1] init 1;
+
+  //the IDS can give us some probability if a is compromised
+  [check] (a=0) & (b=0) & (confidence=1) -> 
+    0.15: (ahat'=0) +
+    0.15: (ahat'=1) +
+    0.15: (ahat'=1) +
+    0.1: (ahat'=1) +
+    0.1: (ahat'=2) +
+    0.1: (ahat'=3) +
+    0.1: (ahat'=4) +
+    0.1: (ahat'=6) +
+    0.05: (ahat'=9);
+  // if a was hacked
+  [check] (a=1) & (b=0) & (confidence=1) -> 
+    0.05: (ahat'=0) +
+    0.1: (ahat'=1) +
+    0.1: (ahat'=3) +
+    0.1: (ahat'=4) +
+    0.1: (ahat'=5) +
+    0.1: (ahat'=6) +
+    0.1: (ahat'=8) +
+    0.1: (ahat'=8) +
+    0.1: (ahat'=9) +
+    0.15: (ahat'=9);
+  
+  [check] (a=0) & (b=0) & (confidence=0) -> 
+    0.15: (ahat'=0) +
+    0.15: (ahat'=1) +
+    0.15: (ahat'=2) +
+    0.15: (ahat'=3) +
+    0.1: (ahat'=4) +
+    0.1: (ahat'=5) +
+    0.1: (ahat'=6) +
+    0.05: (ahat'=7) +
+    0.05: (ahat'=8);
+  // if a was hacked
+  [check] (a=1) & (b=0) & (confidence=0) -> 
+    0.05: (ahat'=0) +
+    0.05: (ahat'=1) +
+    0.1: (ahat'=2) +
+    0.1: (ahat'=4) +
+    0.1: (ahat'=5) +
+    0.1: (ahat'=6) +
+    0.1: (ahat'=7) +
+    0.1: (ahat'=8) +
+    0.15: (ahat'=9) +
+    0.15: (ahat'=9);
+  // if b is hacked, we'll know that both a and b are hacked
+  [check] (b=1) -> (ahat'=10) & (bhat'=1);
+
+  [attack] true -> 
+    0.3: (confidence'=0) + 
+    0.7: (confidence'=1);
+
+  [NOP]       true -> true;
+  [restoreA]  true -> (ahat'=0);
+  [restoreAB] true -> (ahat'=0) & (bhat'=0);
+endmodule
+
+rewards "cost"
+  [restoreA]  (time>=9) & (time<17) : 50;
+  [restoreA]  (time<9): 10;
+  [restoreA]  (time>=17): 20;
+
+  [restoreAB]  (time>=9) & (time<17) : 100;
+  [restoreAB]  (time<9): 25;
+  [restoreAB]  (time>=17): 50;
+  
+  [check] b=1 : 500;
+endrewards

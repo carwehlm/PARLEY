@@ -7,6 +7,7 @@ from scipy.stats import wilcoxon, anderson, mannwhitneyu
 
 
 MAXIMUM_SPREAD_VALUE = 1.5
+plt.rcParams.update({'font.size': 16})
 
 
 def is_dominated(x, y, data):
@@ -127,9 +128,9 @@ def create_selected_box_plots(gains_data, selected_maps, ylabel, title):
 
     plt.xlabel('Map')
     plt.ylabel(ylabel)
-    plt.title(title)
+    # plt.title(title)
     # plt.legend()  # Add legend to show the zero line
-    plt.savefig(f'plots/box-plots/{ylabel}_{title[:1]}_{title[2:]}.png')
+    plt.savefig(f'plots/box-plots/{ylabel}_{title[:1]}_{title[2:]}.pdf')
 
 
 
