@@ -1,3 +1,5 @@
+Check out more about PARLEY in our SEAMS 2024 paper, publicly available on Arxiv.org here: https://arxiv.org/pdf/2401.17187.pdf. 
+
 To replicate our experiments, you need to install EvoChecker using maven.
 To this end, navigate to ./Applications/EvoChecker-master and run mvn install
 EvoChecker should be installed and executable from ./Applications/EvoChecker-master/target/EvoChecker-1.1.0.jar
