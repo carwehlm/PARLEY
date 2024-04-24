@@ -27,8 +27,7 @@ def models(i):
 def baseline(i):
     baseline_file = f'Applications/EvoChecker-master/data/ROBOT{i}_BASELINE/Front'
     infile = f'Applications/EvoChecker-master/models/model_{i}.prism'
-    if not os.path.exists(f'Applications/EvoChecker-master/data/ROBOT{i}_BASELINE'):
-        os.mkdir(f'Applications/EvoChecker-master/data/ROBOT{i}_BASELINE')
+    os.makedirs(f'Applications/EvoChecker-master/data/ROBOT{i}_BASELINE', exist_ok=True)
     with open(baseline_file, 'w') as b_file:
         for period in range(1, 11):
             b_file.write(prism_caller.compute_baseline(infile, period))
