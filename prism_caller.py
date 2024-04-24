@@ -1,8 +1,10 @@
 import os
+import sys
 import subprocess
 
+prism_bin = 'Applications/prism/bin/prism' if sys.platform == "darwin" else 'prism'  # use local prism if not OS X
 properties = ('\' P=? [ F x=9 & y=9 ] \'', '\' R{\"cost\"}=? [ C<=200 ] \'')
-command = 'Applications/prism/bin/prism -maxiters 50000 out.prism -pf '
+command = f'{prism_bin} -maxiters 50000 out.prism -pf '
 
 
 def compute_baseline(infile, period):
@@ -40,6 +42,7 @@ def compute_baseline(infile, period):
             else:
                 print(f"Command failed with return code {result.returncode}")
                 print(result.stdout)
+                print(result.stderr)
 
         except Exception as e:
             print(f"An error occurred: {e}")
