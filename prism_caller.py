@@ -1,3 +1,4 @@
+import os
 import subprocess
 
 properties = ('\' P=? [ F x=9 & y=9 ] \'', '\' R{\"cost\"}=? [ C<=200 ] \'')
@@ -42,4 +43,5 @@ def compute_baseline(infile, period):
 
         except Exception as e:
             print(f"An error occurred: {e}")
+    os.remove("out.prism")
     return resultline
