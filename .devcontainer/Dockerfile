@@ -31,4 +31,5 @@ RUN wget -q -O - https://www.prismmodelchecker.org/dl/prism-${prism_version}-lin
  && ln -s /opt/prism/bin/prism /usr/local/bin/prism \
  && ln -s /opt/prism/bin/xprism /usr/local/bin/xprism \
  && ln -s /opt/prism/bin/ngprism /usr/local/bin/ngprism \
- && echo 'export PATH=${PATH}:/opt/prism/bin' >> ~/.bashrc
+ && echo 'export PATH=${PATH}:/opt/prism/bin' >> ~/.bashrc \
+ && ln -s "$(which python3)" /usr/bin/python
