@@ -4,11 +4,22 @@ To replicate our experiments, you need to install EvoChecker using maven.
 To this end, navigate to ./Applications/EvoChecker-master and run mvn install
 EvoChecker should be installed and executable from ./Applications/EvoChecker-master/target/EvoChecker-1.1.0.jar
 
-You might need to download the correct PRISM version for your machine from
-https://www.prismmodelchecker.org/download.php
-so that it is installed in ./Applications/prism
-with the terminal command to run PRISM as
-./Applications/prism/bin/prism
+```
+cd ./Applications/EvoChecker-master
+mvn install
+cd ../../
+
+java -jar ./Applications/EvoChecker-master/target/EvoChecker-1.1.0.jar
+```
+
+If you are not using macOS you need to download the correct PRISM version for your machine from
+https://www.prismmodelchecker.org/download.php ans install it.
+
+Check if at least one of the two commands work:
+```
+./Applications/prism/bin/prism # macOS
+prism
+```
 
 Finally, we require the following python packages:
 - numpy
