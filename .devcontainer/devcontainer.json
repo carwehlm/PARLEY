@@ -1,0 +1,10 @@
+{
+	"name": "PARLEY Execution Environment",
+	"build": {
+		"dockerfile": "Dockerfile",
+		"args": {
+			"prism_version": "4.8.1",
+			"prism_arch": "x86"
+		}
+	}
+}
