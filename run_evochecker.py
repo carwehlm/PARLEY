@@ -19,6 +19,7 @@ def run_task(args):
         f.write("       PLOT_PARETO_FRONT = false\n")
         f.write("       VERBOSE = true\n")
         f.write("       INIT_PORT = 55{0}\n".format(str(i)))
+    # Note: INIT_PORT doesn't have an effect https://github.com/gerasimou/EvoChecker/issues/11
 
     os.system('java -jar ./target/EvoChecker-1.1.0.jar ' + path)
 
