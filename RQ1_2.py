@@ -16,8 +16,8 @@ def maps():
 
 def models(i):
     prism_model_generator.generate_model(i)
-    infile = f'Applications/EvoChekcer-master/models/model_{i}.prism'
-    outfile = f'Applications/EvoChekcer-master/models/model_{i}_umc.prism'
+    infile = f'Applications/EvoChecker-master/models/model_{i}.prism'
+    outfile = f'Applications/EvoChecker-master/models/model_{i}_umc.prism'
     umc_synthesis.manipulate_prism_model(infile, outfile, before_actions=['east', 'west', 'north', 'south'],
                                          after_actions=['check'])
 
