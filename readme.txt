@@ -26,6 +26,11 @@ Finally, we require the following python packages:
 - multiprocessing
 - re
 
+This command should be sufficient:
+```
+pip3 install -r requirements.txt
+```
+
 You can replicate our experiments with running the following scripts:
 RQ1_2.py
 - creates 90 random maps of size 10x10
