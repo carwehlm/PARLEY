@@ -3,7 +3,8 @@ from multiprocessing import Pool, cpu_count
 
 
 def run_task(args):
-    os.system('export LD_LIBRARY_PATH=libs/runtime')
+    os.chdir('Applications/EvoChecker-master')
+    os.environ['LD_LIBRARY_PATH'] = "libs/runtime"
     i, rep = args
     path = "./{0}_{1}.properties".format(str(i), str(rep))
     open(path, "w").close()
@@ -19,7 +20,7 @@ def run_task(args):
         f.write("       VERBOSE = true\n")
         f.write("       INIT_PORT = 55{0}\n".format(str(i)))
 
-    os.system('java -jar ./Applications/EvoChecker-master/target/EvoChecker-1.1.0.jar ' + path)
+    os.system('java -jar ./target/EvoChecker-1.1.0.jar ' + path)
 
 
 def run(map_, replications):
@@ -34,4 +35,3 @@ def run(map_, replications):
 
     with Pool(num_processes) as pool:
         pool.map(run_task, tasks)
-
