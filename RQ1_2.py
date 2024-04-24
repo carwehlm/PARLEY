@@ -10,6 +10,7 @@ import plot_fronts
 
 max_replications = 10
 
+
 def maps():
     create_maps.create_90_maps()
 
@@ -39,9 +40,11 @@ def evo_checker(i):
     # invoke EvoChecker
     run_evochecker.run(i, max_replications)
 
+
 def fronts(i):
     for period in range(max_replications):
         plot_fronts.plot_pareto_front(i, period)
+
 
 def main():
     # maps()
