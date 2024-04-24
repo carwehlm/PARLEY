@@ -20,8 +20,8 @@ def models(i):
     infile = f'Applications/EvoChecker-master/models/model_{i}.prism'
     outfile = f'Applications/EvoChecker-master/models/model_{i}_umc.prism'
     # TODO umc_synthesis.manipulate_prism_model is currently broken
-    umc_synthesis.manipulate_prism_model(infile, outfile, before_actions=['east', 'west', 'north', 'south'],
-                                         after_actions=['check'])
+    #umc_synthesis.manipulate_prism_model(infile, outfile, before_actions=['east', 'west', 'north', 'south'],
+    #                                     after_actions=['check'])
 
 
 def baseline(i):
