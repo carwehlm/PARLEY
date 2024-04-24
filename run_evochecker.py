@@ -10,7 +10,7 @@ def run_task(args):
     open(path, "w").close()
     with open(path, 'a') as f:
         f.write("PROBLEM = ROBOT{0}_REP{1}\n".format(str(i), str(rep)))
-        f.write("       MODEL_TEMPLATE_FILE = models/model_{0}.prism\n".format(str(i)))
+        f.write("       MODEL_TEMPLATE_FILE = models/model_{0}_umc.prism\n".format(str(i)))
         f.write("       PROPERTIES_FILE = robot.pctl\n")
         f.write("       ALGORITHM = NSGAII\n")
         f.write("       POPULATION_SIZE = 100\n")
