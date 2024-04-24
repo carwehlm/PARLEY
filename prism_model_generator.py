@@ -44,7 +44,6 @@ def build_map(filename):
     #    map_data.append([i[j] for i in n])
 
 
-
 def preambel():
     with open(prism_file, 'a') as f:
         f.write('dtmc\n')
@@ -172,5 +171,3 @@ def generate_model(i):
     rewards()
 
     print("finished map " + str(i))
-
-
