@@ -45,8 +45,6 @@ def fronts(i):
 
 def main():
     # maps()
-    if not os.path.exists('plots/fronts'):
-        os.mkdir('plots/fronts')
     for i in range(10, 11):
         # models(i)
         # baseline(i)
@@ -54,10 +52,10 @@ def main():
         # fronts(i)
         print(f'Finished map {i}')
     # evaluation
-    if not os.path.exists('plots/box-plots'):
-        os.mkdir('plots/box-plots')
     evaluation.main()
 
 
 if __name__ == '__main__':
+    os.makedirs('plots/fronts', exist_ok=True)
+    os.makedirs('plots/box-plots', exist_ok=True)
     main()
