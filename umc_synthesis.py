@@ -21,20 +21,20 @@ def manipulate_prism_model(input_path, output_path, possible_decisions=[0, 3], d
 
 
 def get_variables(prism_model_path, decision_variables):
-    # get all constants
-    constants_pattern = re.compile(r'const\s+int\s+(\w+)\s*=\s*(\d+)\s*;')
-    constants = {}
+    # get all int constants
+    int_constants_pattern = re.compile(r'const\s+int\s+(\w+)\s*=\s*(-?\s*\d+)\s*;')
+    int_constants = {}
 
     with open(prism_model_path, 'r') as prism_model_file:
         # Process the file line by line
         for line in prism_model_file:
             line = line.strip()
             # Match constants in each line
-            matches = constants_pattern.finditer(line)
+            matches = int_constants_pattern.finditer(line)
             for match in matches:
-                constants[match.group(1)] = int(match.group(2))
+                int_constants[match.group(1)] = int(match.group(2).replace(" ", ""))
 
-    pattern = re.compile(r'(\w+)\s*:\s*\[(\w+)\.\.(\w+)\]\s*init\s*(\w+);')
+    int_variable_declaration_pattern = re.compile(r'(\w+)\s*:\s*\[(-?\s*\w+)\s*\.\.\s*(-?\s*\w+)\]\s*init\s*(-?\s*\w+)\s*;')
     _vars = []
     _bel = []
 
@@ -43,21 +43,21 @@ def get_variables(prism_model_path, decision_variables):
         for line in prism_model_file:
             line = line.strip()
             # Match variables in each line
-            matches = pattern.finditer(line)
+            matches = int_variable_declaration_pattern.finditer(line)
             for match in matches:
                 if match.group(1)[-3:] == 'hat':
                     _bel.append(match.group(1))
                 elif match.group(1) not in decision_variables:
                     continue
-                lower_limit = __get_limit(match.group(2), constants)
-                upper_limit = __get_limit(match.group(3), constants)
+                lower_limit = __get_limit(match.group(2).replace(" ", ""), int_constants)
+                upper_limit = __get_limit(match.group(3).replace(" ", ""), int_constants)
                 _vars.append([match.group(1), lower_limit, upper_limit])
 
     return _vars, _bel
 
 
 def __get_limit(string, constants):
-    if not str.isnumeric(string):
+    if not string.lstrip("-").isdigit():
         return constants[string]
     else:
         return int(string)
