@@ -4,7 +4,7 @@ import shutil
 
 
 def manipulate_prism_model(input_path, output_path, possible_decisions=[0, 3], decision_variables=[],
-                           before_actions=[], after_actions=[], controller=None):
+                           before_actions=[], after_actions=[], controller=None, module_name='Knowledge'):
     if os.path.abspath(input_path) == os.path.abspath(output_path):
         raise ValueError("Input and output files cannot be the same.")
 
@@ -12,7 +12,7 @@ def manipulate_prism_model(input_path, output_path, possible_decisions=[0, 3], d
 
     variables, beliefs = get_variables(input_path, decision_variables)
 
-    add_transition_to_module(output_path, beliefs)
+    add_transition_to_module(output_path, beliefs, module_name)
     if controller is None:
         add_periodic_controller(output_path, possible_decisions, variables)
     else:
