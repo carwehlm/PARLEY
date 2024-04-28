@@ -73,39 +73,20 @@ def add_transition_to_module(file_path, beliefs, module_name='Knowledge'):
     new_transition += ';'
 
     # Identify the position of the module declaration
-    module_declaration_pattern = re.compile(fr'module {module_name}\s*([\s\S]*?)endmodule')
-    module_start_pattern = re.compile(fr'module\s+{module_name}\s+')
-    module_end_pattern = re.compile(fr'endmodule')
-    # Read the file line by line
-    file = open(file_path, 'r')
-    lines = file.readlines()
-    file.seek(0)
-
-    # Search for the module declaration
-    inside_module = False
-    added = False
-    i = 0
-    for line in file:
-        # for i, line in enumerate(lines):
-        if module_start_pattern.search(line):
-            # We found the start of the module
-            inside_module = True
-        elif inside_module and module_end_pattern.search(line):
-            # We found the end of the module
-            # Insert the new transition before the end of the module
-            lines.insert(i, f"{new_transition}\n")
-            inside_module = False
-            added = True
-            break
-        i += 1
-    file.close()
-    if not added:
+    module_declaration_pattern = re.compile(fr'(?<=module {module_name}).*(?=endmodule)', re.DOTALL)
+    file_content = ''
+    with open(file_path, 'r') as file:
+        file_content = file.read()
+    module_content_old_match = module_declaration_pattern.search(file_content)
+    if module_content_old_match is None:
         print(f"Module '{module_name}' not found in the model.")
-    else:
-        # Write the updated lines back to the file
-        file = open(file_path, 'w')
-        file.writelines(lines)
-        file.close()
+        return
+    module_content_old = module_content_old_match.group()
+    # append the new transition to the module
+    module_content_new = f"{module_content_old}{new_transition}\n"
+    # overwrite the file with the new content
+    with open(file_path, 'w') as file:
+        file.write(file_content.replace(module_content_old, module_content_new))
 
 
 def add_periodic_controller(file_path, possible_decisions, variables,):
