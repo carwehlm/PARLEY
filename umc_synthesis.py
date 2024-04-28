@@ -22,7 +22,7 @@ def manipulate_prism_model(input_path, output_path, possible_decisions=[0, 3], d
 
 def get_variables(prism_model_path, decision_variables):
     # get all constants
-    constants_pattern = re.compile(r'const\s+int\s+(\w+)\s*=\s*(\d+);')
+    constants_pattern = re.compile(r'const\s+int\s+(\w+)\s*=\s*(\d+)\s*;')
     constants = {}
 
     with open(prism_model_path, 'r') as prism_model_file:
