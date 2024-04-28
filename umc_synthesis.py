@@ -78,7 +78,7 @@ def add_transition_to_module(file_path, beliefs, module_name='Knowledge'):
     module_content_old_match = module_declaration_pattern.search(file_content)
     if module_content_old_match is None:
         print(f"Module '{module_name}' not found in the model.")
-        return
+        return  # TODO maybe throw an error
     module_content_old = module_content_old_match.group()
     # append the new transition to the module
     module_content_new = f"{module_content_old}{new_transition}\n"
