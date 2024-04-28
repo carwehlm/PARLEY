@@ -1,5 +1,6 @@
 import re
 import os
+import shutil
 
 
 def manipulate_prism_model(input_path, output_path, possible_decisions=[0, 3], decision_variables=[],
@@ -7,24 +8,12 @@ def manipulate_prism_model(input_path, output_path, possible_decisions=[0, 3], d
     if os.path.abspath(input_path) == os.path.abspath(output_path):
         raise ValueError("Input and output files cannot be the same.")
 
-    out = open(output_path, 'w')
-    out.close()
+    shutil.copyfile(input_path, output_path)
 
     # Open the input file
     with open(input_path, 'r') as input_file:
-        # Open the output file
-        with open(output_path, 'a+') as output_file:
-            # Process the file line by line
-            for line in input_file:
-                # Copy the line to the output file
-                output_file.write(line)
-
-            # Reset the file pointer to the beginning
-            input_file.seek(0)
-            output_file.seek(0)
-
-            # Call the methods with the output file
-            variables, beliefs = get_variables(input_file, decision_variables)
+        # Call the methods with the output file
+        variables, beliefs = get_variables(input_file, decision_variables)
 
     add_transition_to_module(output_path, beliefs)
     if controller is None:
