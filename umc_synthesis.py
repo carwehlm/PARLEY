@@ -28,6 +28,7 @@ def get_variables(prism_model_path, decision_variables):
     with open(prism_model_path, 'r') as prism_model_file:
         # Process the file line by line
         for line in prism_model_file:
+            line = line.strip()
             # Match constants in each line
             matches = constants_pattern.finditer(line)
             for match in matches:
@@ -40,6 +41,7 @@ def get_variables(prism_model_path, decision_variables):
     with open(prism_model_path, 'r') as prism_model_file:
         # Process the file line by line again
         for line in prism_model_file:
+            line = line.strip()
             # Match variables in each line
             matches = pattern.finditer(line)
             for match in matches:
