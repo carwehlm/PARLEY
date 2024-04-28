@@ -10,10 +10,7 @@ def manipulate_prism_model(input_path, output_path, possible_decisions=[0, 3], d
 
     shutil.copyfile(input_path, output_path)
 
-    # Open the input file
-    with open(input_path, 'r') as input_file:
-        # Call the methods with the output file
-        variables, beliefs = get_variables(input_file, decision_variables)
+    variables, beliefs = get_variables(input_path, decision_variables)
 
     add_transition_to_module(output_path, beliefs)
     if controller is None:
@@ -23,37 +20,36 @@ def manipulate_prism_model(input_path, output_path, possible_decisions=[0, 3], d
     add_turn(output_path, before_actions, after_actions)
 
 
-def get_variables(file, decision_variables):
+def get_variables(prism_model_path, decision_variables):
     # get all constants
     constants_pattern = re.compile(r'const\s+int\s+(\w+)\s*=\s*(\d+);')
     constants = {}
 
-    # Process the file line by line
-    for line in file:
-        # Match constants in each line
-        matches = constants_pattern.finditer(line)
-        for match in matches:
-            constants[match.group(1)] = int(match.group(2))
+    with open(prism_model_path, 'r') as prism_model_file:
+        # Process the file line by line
+        for line in prism_model_file:
+            # Match constants in each line
+            matches = constants_pattern.finditer(line)
+            for match in matches:
+                constants[match.group(1)] = int(match.group(2))
 
     pattern = re.compile(r'(\w+)\s*:\s*\[(\w+)\.\.(\w+)\]\s*init\s*(\w+);')
     _vars = []
     _bel = []
 
-    # Reset the file pointer to the beginning
-    file.seek(0)
-
-    # Process the file line by line again
-    for line in file:
-        # Match variables in each line
-        matches = pattern.finditer(line)
-        for match in matches:
-            if match.group(1)[-3:] == 'hat':
-                _bel.append(match.group(1))
-            elif match.group(1) not in decision_variables:
-                continue
-            lower_limit = __get_limit(match.group(2), constants)
-            upper_limit = __get_limit(match.group(3), constants)
-            _vars.append([match.group(1), lower_limit, upper_limit])
+    with open(prism_model_path, 'r') as prism_model_file:
+        # Process the file line by line again
+        for line in prism_model_file:
+            # Match variables in each line
+            matches = pattern.finditer(line)
+            for match in matches:
+                if match.group(1)[-3:] == 'hat':
+                    _bel.append(match.group(1))
+                elif match.group(1) not in decision_variables:
+                    continue
+                lower_limit = __get_limit(match.group(2), constants)
+                upper_limit = __get_limit(match.group(3), constants)
+                _vars.append([match.group(1), lower_limit, upper_limit])
 
     return _vars, _bel
 
