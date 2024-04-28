@@ -67,7 +67,7 @@ def add_transition_to_module(file_path, beliefs, module_name='Knowledge'):
     # figure out what the transition should look like
     new_transition = '  [update] true ->'
     for identifier in beliefs:
-        new_transition += ' ({0}\'={1}) &'.format(identifier, identifier[:-3])
+        new_transition += f' ({identifier}\'={identifier[:-3]}) &'
     # remove the last '&'
     new_transition = new_transition[:-2]
     new_transition += ';'
