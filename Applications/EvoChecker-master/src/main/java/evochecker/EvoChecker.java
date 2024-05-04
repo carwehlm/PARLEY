@@ -88,7 +88,11 @@ public class EvoChecker {
 	/** Pareto set filename*/
 	private String paretoSetFile;
 
+	/** */
+	private double executionTime;
 
+	/** Seed solutions to load*/
+	private String initialSolutions;
 	
 	public EvoChecker() {
 		
@@ -139,6 +143,7 @@ public class EvoChecker {
 			SolutionSet solutions = execute();
 
 			long end = System.currentTimeMillis();
+			executionTime = (end - start)/1000.0;
 
 			//5) save solutions
 			exportResults(outputDir, solutions);
@@ -146,7 +151,7 @@ public class EvoChecker {
 			//6) close down
 			closeDown();
 			
-			System.err.printf("Time:\t%s\n", (end - start)/1000.0);
+			System.out.printf("Time:\t%s\n", executionTime);
 		} 
 		catch (Exception e) {
 			e.printStackTrace();

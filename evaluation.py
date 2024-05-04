@@ -137,14 +137,15 @@ def create_selected_box_plots(gains_data, selected_maps, ylabel, title):
 # Specify the paths to CSV files and the file containing expected values
 fronts_dir = 'Applications/EvoChecker-master/data/'
 
-maps = 100
+#maps = 100
 
 acceptable_intervals = [(0.8, 100), (0.8, 80), (0.8, 60),
                         (0.7, 100), (0.7, 80), (0.7, 60),
                         (0.6, 100), (0.6, 80), (0.6, 60)]
 
 
-def main():
+def main(max_replications:int, maps:int):
+    print("Start evaluation main")
     for acceptable_interval in acceptable_intervals:
         ref_point = np.array(acceptable_interval)
 
@@ -177,7 +178,7 @@ def main():
             rep_hv = []
             rep_spread = []
             # for each replication
-            for rep in range(0, 10):
+            for rep in range(0, max_replications):
                 # Read the expected values from the external file (excluding the first line)
                 pareto_data = []
                 filename = ""
@@ -229,3 +230,5 @@ def main():
 
         print(perform_mann_whitney_u_test(spread_gain))
         print(perform_mann_whitney_u_test(hv_gain))
+
+        print("Finsh evaluation main")
