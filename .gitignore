@@ -6,3 +6,4 @@ Applications/EvoChecker-master/data/
 *.pdf
 *.zip
 .vscode/
+plots_orig/

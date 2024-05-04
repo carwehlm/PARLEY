@@ -1,4 +1,4 @@
-import os
+import os, shutil
 
 import create_maps
 import prism_model_generator
@@ -10,6 +10,31 @@ import plot_fronts
 
 max_replications = 10
 max_maps = 12
+
+def cleanup():
+    print("Start Cleanup")
+
+    #Deleting the previouly created solutions in data. Avoids older solutions being wrongly used in plots and/or evaluation.
+    data_folder_path = 'Applications/EvoChecker-master/data'
+    rep_folders = [os.path.join(data_folder_path,folder) for folder in os.listdir(data_folder_path) if "REP" in folder]
+    rep_folders.sort()
+
+    for folder in rep_folders:
+        print(f"Removing Folder {folder}")
+        shutil.rmtree(folder)
+
+    #Deleting numerous files created during the runtime of the programm. Avoids cluttering. Its a crude solution. If some .txt files should remain, please remove from list.
+    evo_folder_path = "Applications/EvoChecker-master"
+    runtime_files = [os.path.join(evo_folder_path,file) for file in os.listdir(evo_folder_path) if ".properties" in file or ".txt" in file]
+    runtime_files.remove(f"{evo_folder_path}/config.properties")
+    runtime_files.sort()
+
+    for file in runtime_files:
+        print(f"Removing File {file}")
+        os.remove(file)
+
+    print("Finish Cleanup")
+        
 
 def maps():
     create_maps.create_90_maps()
@@ -54,6 +79,7 @@ def fronts(i):
 
 def main():
     print("Start main")
+    cleanup()
     # maps()
     for i in range(10, max_maps):
         # models(i)
