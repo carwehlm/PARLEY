@@ -92,7 +92,7 @@ def add_periodic_controller(file_path, possible_decisions, variables,):
     combinations = generate_combinations_list(variables)
     __add_controller_prefix(file_path, possible_decisions, combinations, variables)
     with open(file_path, 'a') as file:
-        file.write('  step : [1..{0}] init 1;\n'.format(str(possible_decisions[1])))
+        file.write(f'  step : [1..{possible_decisions[1]}] init 1;\n')
     transitions = ['no_update', 'update']
     decisions = ['step<decision', 'step>=decision']
     changes = ['(step\'=step+1)', '(step\'=1)']
@@ -114,13 +114,13 @@ def __add_specific_controller(file_path, transitions, decisions, changes, combin
     with open(file_path, 'a') as file:
         for transition, decision, change in zip(transitions, decisions, changes):
             for combination in combinations:
-                new_line = '  [{0}] ({1}'.format(transition, decision)
+                new_line = f'  [{transition}] ({decision}'
                 for var in range(0, len(variables)):
                     new_line += '_' + str(combination[var])
                 new_line += ')'
                 for var in range(0, len(variables)):
-                    new_line += ' & ({0}={1})'.format(variables[var][0], str(combination[var]))
-                new_line += ' -> {0};\n'.format(change)
+                    new_line += f' & ({variables[var][0]}={combination[var]})'
+                new_line += f' -> {change};\n'
                 file.write(new_line)
 
         file.write('endmodule\n\n')
@@ -134,7 +134,7 @@ def __add_controller_prefix(file_path, possible_decisions, combinations, variabl
             # new_line = 'const int decision'
             for var in range(0, len(variables)):
                 new_line += '_' + str(combination[var])
-            new_line += ' [{0}..{1}];\n'.format(str(possible_decisions[0]), str(possible_decisions[1]))
+            new_line += f' [{possible_decisions[0]}..{possible_decisions[1]}];\n'
             # new_line += '=0;\n'
             file.write('\n' + new_line)
         file.write('const int zero = 0;\n')
@@ -148,13 +148,13 @@ def add_turn(file_path, before_actions, after_actions):
         file.write('  t : [0..2] init 0;\n')
         # actions that precede
         for action in before_actions:
-            file.write('  [{0}] (t=0) -> (t\'=1);\n'.format(action))
+            file.write(f'  [{action}] (t=0) -> (t\'=1);\n')
         file.write('\n')
         file.write('  [no_update] (t=1) -> (t\'=2);\n')
         file.write('  [update] (t=1) -> (t\'=2);\n')
         file.write('\n')
         for action in after_actions:
-            file.write('  [{0}] (t=2) -> (t\'=0);\n'.format(action))
+            file.write(f'  [{action}] (t=2) -> (t\'=0);\n')
         if len(after_actions) == 0:
             file.write('  [] (t=2) -> (t\'=0);\n')
         file.write('endmodule\n')
