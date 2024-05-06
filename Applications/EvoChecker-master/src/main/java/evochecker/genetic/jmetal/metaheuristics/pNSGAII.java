@@ -116,6 +116,7 @@ public class pNSGAII extends Algorithm {
 
     String set="";
     List<String> lines = new ArrayList<String>();
+    System.out.println("Checking for Seed Load");
     if (Boolean.parseBoolean(Utility.getProperty(Constants.LOAD_SEED_KEYWORD)))
     {
       // Find most recent Pareto Set
@@ -132,7 +133,7 @@ public class pNSGAII extends Algorithm {
           while((line=set_reader.readLine())!=null)
           {
             lines.add(line);
-            // System.out.println(line);
+            System.out.println(line);
           }
           set_reader.close();     
         } catch (IOException e)
@@ -149,11 +150,12 @@ public class pNSGAII extends Algorithm {
       // Change initial population to previously found set (if exists)
       if (!(set.equals("")))
       {
+        // This part loops for pop size
         if (i<lines.size()-2)
         {
-          // System.out.println("Before");
-          // System.out.println(newSolution.getDecisionVariables()[0]);
-          // System.out.println(newSolution.getDecisionVariables()[1]);
+          System.out.println("Before");
+          System.out.println(newSolution.getDecisionVariables()[0]);
+          System.out.println(newSolution.getDecisionVariables()[1]);
           String result = lines.get(i+2).replaceAll("\\s",",");
 
           // Get arrays
@@ -173,9 +175,9 @@ public class pNSGAII extends Algorithm {
             int_arr.setValue(j-real_arr.getLength(), val);
           }
           // Sanity check on update happening
-          // System.out.println("After");
-          // System.out.println(newSolution.getDecisionVariables()[0]);
-          // System.out.println(newSolution.getDecisionVariables()[1]);
+          System.out.println("After");
+          System.out.println(newSolution.getDecisionVariables()[0]);
+          System.out.println(newSolution.getDecisionVariables()[1]);
         }
       }    
       parallelEvaluator_.addSolutionForEvaluation(newSolution) ;

@@ -6,16 +6,17 @@ import umc_synthesis
 import prism_caller
 import run_evochecker
 import evaluation
-import plot_fronts
+import plot_fronts, baseline_generator
 
 max_replications = 10
 max_maps = 12
+data_folder_path = 'Applications/EvoChecker-master/data'
+evo_folder_path = "Applications/EvoChecker-master"
 
 def cleanup():
     print("Start Cleanup")
 
     #Deleting the previouly created solutions in data. Avoids older solutions being wrongly used in plots and/or evaluation.
-    data_folder_path = 'Applications/EvoChecker-master/data'
     rep_folders = [os.path.join(data_folder_path,folder) for folder in os.listdir(data_folder_path) if "REP" in folder]
     rep_folders.sort()
 
@@ -24,7 +25,6 @@ def cleanup():
         shutil.rmtree(folder)
 
     #Deleting numerous files created during the runtime of the programm. Avoids cluttering. Its a crude solution. If some .txt files should remain, please remove from list.
-    evo_folder_path = "Applications/EvoChecker-master"
     runtime_files = [os.path.join(evo_folder_path,file) for file in os.listdir(evo_folder_path) if ".properties" in file or ".txt" in file]
     runtime_files.remove(f"{evo_folder_path}/config.properties")
     runtime_files.sort()
@@ -35,6 +35,10 @@ def cleanup():
 
     print("Finish Cleanup")
         
+def set_baseline(i):
+    print("Start Set Baseline Generation")
+    baseline_generator.generateSet(f"{data_folder_path}/ROBOT{i}_BASELINE/Set")
+    print("Finish Set Baseline Generation")
 
 def maps():
     create_maps.create_90_maps()
@@ -84,6 +88,7 @@ def main():
     for i in range(10, max_maps):
         # models(i)
         # baseline(i)
+        set_baseline(i)
         evo_checker(i)
         fronts(i)
         print(f'Finished map {i}')

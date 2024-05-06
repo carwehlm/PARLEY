@@ -12,12 +12,12 @@ def run_task(args):
         f.write("PROPERTIES_FILE = robot.pctl\n")
         f.write("ALGORITHM = NSGAII\n")
         f.write("POPULATION_SIZE = 100\n")
-        f.write("MAX_EVALUATIONS = 100\n")
+        f.write("MAX_EVALUATIONS = 400\n")
         f.write("PROCESSORS = 8\n")
         f.write("PLOT_PARETO_FRONT = false\n")
         f.write("VERBOSE = false\n")
-        f.write("LOAD_SEED = false\n")
-        f.write(f"SEED_FILE = data/ROBOT{i}_BASELINE/front\n")
+        f.write("LOAD_SEED = true\n")
+        f.write(f"SEED_FILE = data/ROBOT{i}_BASELINE/Set\n")
         f.write(f"INIT_PORT = 5{i}{rep}\n")
     # Note: The Overhead means that a higher processor count will take longer to start but will finish faster.For a pop size 100, max_eval 100, a  processor count 8 is recommended.
 
