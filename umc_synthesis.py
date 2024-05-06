@@ -136,7 +136,7 @@ def __add_controller_prefix(file_path, possible_decisions, combinations, variabl
                 new_line += '_' + str(combination[var])
             new_line += ' [{0}..{1}];\n'.format(str(possible_decisions[0]), str(possible_decisions[1]))
             # new_line += '=0;\n'
-            file.write(new_line)
+            file.write('\n' + new_line)
         file.write('const int zero = 0;\n')
         file.write('const int one = 1;\n')
         file.write('module UMC\n')
