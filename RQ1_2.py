@@ -8,8 +8,9 @@ import run_evochecker
 import evaluation
 import plot_fronts, baseline_generator
 
-max_replications = 10
-max_maps = 12
+max_replications = 10       #This changes the Number of REPs.   -Should be 10
+min_maps = 12               #This changes the Number of ROBOTs. -Should be 10
+max_maps = 21               #This changes the Number of ROBOTs. -Should be 100
 data_folder_path = 'Applications/EvoChecker-master/data'
 evo_folder_path = "Applications/EvoChecker-master"
 
@@ -83,9 +84,9 @@ def fronts(i):
 
 def main():
     print("Start main")
-    cleanup()
+    #cleanup()
     # maps()
-    for i in range(10, max_maps):
+    for i in range(min_maps, max_maps):
         # models(i)
         # baseline(i)
         set_baseline(i)
