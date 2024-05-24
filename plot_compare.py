@@ -13,6 +13,9 @@ boundary_y = (0, 70)
 minmax_model = (10,31)
 minmax_repl = (0,10) 
 
+#TODO Change orientation of values so best fit is on the top right
+#TODO Cluster bilden
+
 def pareto_front(data):
     pareto_data = []
     for x, y in data:
@@ -143,6 +146,25 @@ def build_lineplot_compare(m, replication, output_filename=None):
     plt.savefig('plots/compare/' + output_filename + '.pdf')
     plt.close()
 
+def plot_database(df:pd.DataFrame):
+    """Function to plot database valus graphically"""
+
+    plt.figure(figsize=(8, 8))
+    sns.scatterplot(data=df, x=columnNames[3], y=columnNames[4], style=columnNames[2], markers=markers, hue=columnNames[2], size=columnNames[5])
+    plt.xlabel('Probability of mission success')
+    plt.ylabel('Cost')
+    output_filename = f'Database Plot'
+    plt.title(output_filename)
+    plt.xlim((1, 0.7))
+    plt.ylim((40, 90))
+    plt.legend()
+    plt.grid(True)
+
+    # Save the plot as an image file
+    plt.savefig('plots/compare/' + output_filename + '.pdf')
+    plt.close()
+
+
 def build_database():
     """Creates a Databse containing all available Results"""
     print("Creating Database")
@@ -184,9 +206,9 @@ def filter_database(master:pd.DataFrame, excelExport = True):
 
     return master_highsuccess, master_lowcost, master_bestratio
 
-
 master = build_database()
-df = filter_database(master)
+df_1, df_2, df_3 = filter_database(master)
+plot_database(df_1)
 
 for model in range(minmax_model[0], minmax_model[1]):
     for rep in range(minmax_repl[0], minmax_repl[1]):
