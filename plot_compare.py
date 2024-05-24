@@ -2,6 +2,7 @@ import os
 import seaborn as sns
 import matplotlib.pyplot as plt
 import pandas as pd
+#import openpyxl as pyxl
 
 #Control Variables - These are used in all following functions and allow dynamic changes.
 folderpath_original = r"/home/arturo/Dokumente/MikeCharlie/Results/Original/data"
@@ -158,8 +159,8 @@ def build_database():
     print("Database Created")
     return master
 
-def filter_database(master:pd.DataFrame):
-    """Filters the Database on the highest values"""
+def filter_database(master:pd.DataFrame, excelExport = True):
+    """Filters the Database on the highest values for success, lowest for cost abd highest ratio. Return three dataframes and writed to cwd."""
 
     master_highsuccess  = pd.DataFrame(columns=columnNames)
     master_lowcost      = pd.DataFrame(columns=columnNames)
@@ -174,6 +175,12 @@ def filter_database(master:pd.DataFrame):
         master_highsuccess = pd.concat([master_highsuccess,df_highsuccess], ignore_index=True)
         master_lowcost = pd.concat([master_lowcost,df_lowcost], ignore_index=True)
         master_bestratio = pd.concat([master_bestratio,df_bestratio], ignore_index=True)
+
+    if excelExport:
+        with pd.ExcelWriter(f"{os.getcwd()}/database.xlsx", mode='w') as writer:     #In order to append onto an existing file an ExcelWrite Object is needed
+            master_highsuccess.to_excel(writer, sheet_name="highsuccess")
+            master_lowcost.to_excel(writer, sheet_name="lowcost")
+            master_bestratio.to_excel(writer, sheet_name="bestratio")
 
     return master_highsuccess, master_lowcost, master_bestratio
 
