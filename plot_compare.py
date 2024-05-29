@@ -146,17 +146,16 @@ def build_lineplot_compare(m, replication, output_filename=None):
     plt.savefig('plots/compare/' + output_filename + '.pdf')
     plt.close()
 
-def plot_database(df:pd.DataFrame):
+def plot_database(df:pd.DataFrame, output_filename:str, xlim:tuple[float,float], ylim:tuple[float,float]):
     """Function to plot database valus graphically"""
 
     plt.figure(figsize=(8, 8))
     sns.scatterplot(data=df, x=columnNames[3], y=columnNames[4], style=columnNames[2], markers=markers, hue=columnNames[2], size=columnNames[5])
     plt.xlabel('Probability of mission success')
     plt.ylabel('Cost')
-    output_filename = f'Database Plot'
     plt.title(output_filename)
-    plt.xlim((1, 0.7))
-    plt.ylim((40, 90))
+    plt.xlim(xlim)
+    plt.ylim(ylim)
     plt.legend()
     plt.grid(True)
 
@@ -182,8 +181,9 @@ def build_database():
     return master
 
 def filter_database(master:pd.DataFrame, excelExport = True):
-    """Filters the Database on the highest values for success, lowest for cost abd highest ratio. Return three dataframes and writed to cwd."""
+    """Filters the Database on the highest values for success, lowest for cost and highest ratio. Return three dataframes and writes to cwd/plots."""
 
+    #So this groups on the type column after baseline, URC, URC Mod and then get the most successful, lowest cost and best ratio replication for each model
     master_highsuccess  = pd.DataFrame(columns=columnNames)
     master_lowcost      = pd.DataFrame(columns=columnNames)
     master_bestratio    = pd.DataFrame(columns=columnNames)
@@ -198,20 +198,39 @@ def filter_database(master:pd.DataFrame, excelExport = True):
         master_lowcost = pd.concat([master_lowcost,df_lowcost], ignore_index=True)
         master_bestratio = pd.concat([master_bestratio,df_bestratio], ignore_index=True)
 
+    #Build tables summarizing the previous results, with min, max, median, average
+    #This table counts the replication in which the value, in this case highsuccess, was found. This way we can compare between types at which stage the algorithm reached its optimum
+    master_highsuccess = master_highsuccess.astype({columnNames[1] : "category"})
+    table_highsucess_URC = master_highsuccess.loc[master_highsuccess[columnNames[2]]=="URC"].groupby(columnNames[1])[columnNames[2]].count().rename("URC")
+    table_highsucess_URCmod = master_highsuccess.loc[master_highsuccess[columnNames[2]]=="URC Mod"].groupby(columnNames[1])[columnNames[2]].count().rename("URC Mod")
+    table_highsucess_baseline = master_highsuccess.loc[master_highsuccess[columnNames[2]]=="Baseline"].groupby(columnNames[1])[columnNames[2]].count().rename("Baseline")
+    
+    table_highsucess = pd.DataFrame([table_highsucess_URC, table_highsucess_URCmod, table_highsucess_baseline])
+    table_highsucess = table_highsucess.transpose()
+    total_count = table_highsucess["URC"].sum()
+    table_highsucess["URC Percentage"] = round(table_highsucess["URC"] /total_count * 100, 2)
+    table_highsucess["URC Mod Percentage"] = round(table_highsucess["URC Mod"] /total_count * 100, 2)
+    table_highsucess["Baseline Percentage"] = round(table_highsucess["Baseline"] /total_count * 100, 2)
+
+
     if excelExport:
-        with pd.ExcelWriter(f"{os.getcwd()}/database.xlsx", mode='w') as writer:     #In order to append onto an existing file an ExcelWrite Object is needed
+        with pd.ExcelWriter(f"{os.getcwd()}/plots/database.xlsx", mode='w') as writer:     #In order to append onto an existing file an ExcelWrite Object is needed
             master_highsuccess.to_excel(writer, sheet_name="highsuccess")
             master_lowcost.to_excel(writer, sheet_name="lowcost")
             master_bestratio.to_excel(writer, sheet_name="bestratio")
+            table_highsucess.to_excel(writer, sheet_name="t_highsuccess")
 
     return master_highsuccess, master_lowcost, master_bestratio
 
+### --- ### --- ### --- Modeling --- ### --- ### --- ###
 master = build_database()
-df_1, df_2, df_3 = filter_database(master)
-plot_database(df_1)
+df_highsuccess, df_lowcost, df_bestratio = filter_database(master)
+plot_database(df_highsuccess, "High Success", (1, 0.7), (40, 90))
+plot_database(df_lowcost, "Low Cost",(1,0.5), (10,40))
+plot_database(df_bestratio, "Best Ratio",(1,0.5), (10,40))
 
 for model in range(minmax_model[0], minmax_model[1]):
     for rep in range(minmax_repl[0], minmax_repl[1]):
         print(f"Working on ROBOT{model}_REP{rep}")
-        build_lineplot(model,rep, "URC Mod")
-        build_lineplot_compare(model,rep)
+        #build_lineplot(model,rep, "URC Mod")
+        #build_lineplot_compare(model,rep)
