@@ -10,7 +10,7 @@ columnNames = ["Model", "Replication", "Type", "Success Chance", "Cost", "Cost-S
 markers = {"URC": "^", "URC Mod": "o", "Baseline": "X"}
 boundary_x = (1, 0.5)
 boundary_y = (0, 70)
-minmax_model = (10,31)
+minmax_model = (10,51)
 minmax_repl = (0,10) 
 
 #TODO Change orientation of values so best fit is on the top right
@@ -113,7 +113,7 @@ def build_lineplot(m, replication, ptype):
 
 def build_lineplot_compare(m, replication, output_filename=None):
     df = plot_pareto_front(m, replication, ptype="URC Mod")
-    df_original = plot_pareto_front(ptype="URC", file_path=f"{folderpath_original}/ROBOT{m}_REP{replication}/NSGAII/")
+    df_original = plot_pareto_front(m, replication, ptype="URC", file_path=f"{folderpath_original}/ROBOT{m}_REP{replication}/NSGAII/")
 
     df = pd.concat([df, df_original], ignore_index=True)  # Add new and old values together
     df.drop_duplicates(inplace=True)
@@ -213,5 +213,5 @@ plot_database(df_1)
 for model in range(minmax_model[0], minmax_model[1]):
     for rep in range(minmax_repl[0], minmax_repl[1]):
         print(f"Working on ROBOT{model}_REP{rep}")
-        #build_lineplot(model,rep, "URC Mod")
-        #build_lineplot_compare(model,rep)
+        build_lineplot(model,rep, "URC Mod")
+        build_lineplot_compare(model,rep)
