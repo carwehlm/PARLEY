@@ -10,7 +10,7 @@ columnNames = ["Model", "Replication", "Type", "Success Chance", "Cost", "Cost-S
 markers = {"URC": "^", "URC Mod": "o", "Baseline": "X"}
 boundary_x = (1, 0.5)
 boundary_y = (0, 70)
-minmax_model = (10,51)
+minmax_model = (10,81)
 minmax_repl = (0,10) 
 
 #TODO Change orientation of values so best fit is on the top right
