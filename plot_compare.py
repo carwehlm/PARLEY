@@ -1,14 +1,17 @@
-import os
+import os, time
 import seaborn as sns
 import matplotlib.pyplot as plt
 import pandas as pd
-import multiprocessing as mp
+import concurrent.futures
 
 #Control Variables - These are used in all following functions and allow dynamic changes.
+start = time.perf_counter()
 folderpath_original = r"/home/arturo/Dokumente/MikeCharlie/Results/Original/data"
 columnNames = ["Model", "Replication", "Type", "Success Chance", "Cost", "Cost-Success ratio"]
 tableColumns = ["URC Percentage", "URC Mod Percentage", "Baseline Percentage", "URC Cum. Percentage", "URC Mod Cum. Percentage", "Baseline Cum. Percentage"]
-markers = {"URC": "^", "URC Mod": "o", "Baseline": "X"}
+markers = {"URC": "^", "URC Mod": "o", "Baseline": "X", 
+           "URC Percentage": "^", "URC Mod Percentage": "o", "Baseline Percentage": "X",
+           "URC Cum. Percentage": "^", "URC Mod Cum. Percentage": "o", "Baseline Cum. Percentage": "X"}
 boundary_x = (1, 0.5)
 boundary_y = (0, 70)
 minmax_model = (10,86)
@@ -17,20 +20,24 @@ minmax_repl = (0,10)
 #TODO Change orientation of values so best fit is on the top right
 #TODO Cluster bilden
 
-def pareto_front(data):
-    pareto_data = []
-    for x, y in data:
-        if not is_dominated(x, y, pareto_data):
-            pareto_data.append((x, y))
-    return pareto_data
-
-def is_dominated(x, y, data):
-    for other_x, other_y in data:
-        if other_x >= x and other_y <= y:
-            return True
-    return False
-
 def plot_pareto_front(m:int, replication:int, ptype:str, header=True, file_path=None):
+    """Used by the lineplot and lineplit compare functions to turn the front results into workable tables"""
+
+    def pareto_front(data):
+        """Helper Function of plot_pareto_front"""
+        pareto_data = []
+        for x, y in data:
+            if not is_dominated(x, y, pareto_data):
+                pareto_data.append((x, y))
+        return pareto_data
+
+    def is_dominated(x, y, data):
+        """Helper Function of plot_pareto_front"""
+        for other_x, other_y in data:
+            if other_x >= x and other_y <= y:
+                return True
+        return False
+
     data = []
     filename = ''
     if file_path:
@@ -70,26 +77,6 @@ def plot_pareto_front(m:int, replication:int, ptype:str, header=True, file_path=
 
     return df
 
-def build_scatterplot(m, replication, ptype):
-    df = plot_pareto_front(m,replication, ptype=ptype)
-
-    plt.figure(figsize=(8, 6))
-    
-    sns.scatterplot(data=df, x=columnNames[3], y=columnNames[4], style=columnNames[2], markers=markers, hue=columnNames[2])
-
-    plt.xlabel('Probability of mission success')
-    plt.ylabel('Cost')
-    output_filename = f'robot{m}_rep{replication}'
-    plt.title(output_filename)
-    plt.xlim(1, 0.2)
-    plt.ylim(0, 200)
-    plt.legend()
-    plt.grid(True)
-
-    # Save the plot as an image file
-    plt.savefig('plots/compare/' + output_filename + '.pdf')
-    plt.close()
-
 def build_lineplot(m, replication, ptype):
     df = plot_pareto_front(m,replication, ptype=ptype)
 
@@ -109,7 +96,7 @@ def build_lineplot(m, replication, ptype):
     plt.tight_layout(rect=[0, 0, 1, 0.95])
 
     # Save the plot as an image file
-    plt.savefig('plots/compare/' + output_filename + '.pdf')
+    plt.savefig(f'plots/compare/fronts/{output_filename}.pdf')
     plt.close()
 
 def build_lineplot_compare(m, replication, output_filename=None):
@@ -144,7 +131,7 @@ def build_lineplot_compare(m, replication, output_filename=None):
     plt.grid(True)
 
     # Save the plot as an image file
-    plt.savefig('plots/compare/' + output_filename + '.pdf')
+    plt.savefig(f'plots/compare/fronts/{output_filename}.pdf')
     plt.close()
 
 def plot_database(df:pd.DataFrame, output_filename:str, xlim:tuple[float,float], ylim:tuple[float,float]):
@@ -164,30 +151,42 @@ def plot_database(df:pd.DataFrame, output_filename:str, xlim:tuple[float,float],
     plt.savefig('plots/compare/' + output_filename + '.pdf')
     plt.close()
 
-def plot_table(df:pd.DataFrame, output_filename:str, xlim:tuple[float,float], ylim:tuple[float,float]):
+def plot_table(df:pd.DataFrame, output_filename:str):
     """Function to plot table values graphically"""
+    value_name = "Percentage"
 
+    #Data Selection
+    #df = df.loc[:,tableColumns[3:5]]
+    df = df.loc[:,tableColumns]
+    df.drop(columns=[tableColumns[2],tableColumns[5]], inplace=True)
+    df.reset_index(inplace=True)
+    df = df.melt(columnNames[1], value_name=value_name, var_name=columnNames[0])
+
+    #Plotting    
     plt.figure(figsize=(8, 6))
+    # fig, ax1 = plt.subplots()
+    # ax2 = ax1.twinx() # secondary y-axis
 
     # Use lineplot instead of relplot for more customization options
+    #sns.barplot(x='Date', y='Col1', data=df, ax=ax1) # on primary ax1
+
     sns.lineplot(
         data=df,
-        x=df.index,
-        y=tableColumns[3],
-        hue=tableColumns,
-        style=tableColumns,
+        x=columnNames[1],
+        y=value_name,
+        hue=columnNames[0],
+        style=columnNames[0],
         markers=markers,
         dashes=False,
         alpha=0.7,  # Adjust transparency level here
-        markersize=4 
+        markersize=4
     )
 
-    plt.xlabel('Probability of mission success')
-    plt.ylabel('Cost')
+    plt.xlabel('Replication')
+    plt.ylabel('Percentage / Cum. Percentage')
     plt.title(output_filename)
-    plt.xlim(xlim)
-    plt.ylim(ylim)
-    plt.legend()
+    plt.ylim([0,100])
+    #plt.legend()
     plt.grid(True)
 
     # Save the plot as an image file
@@ -195,7 +194,7 @@ def plot_table(df:pd.DataFrame, output_filename:str, xlim:tuple[float,float], yl
     plt.close()
 
 def build_database():
-    """Creates a Databse containing all available Results"""
+    """Creates a Database containing all available Results"""
     print("Creating Database")
     master = pd.DataFrame(columns=columnNames)
     for model in range(minmax_model[0], minmax_model[1]):
@@ -263,19 +262,18 @@ def filter_database(master:pd.DataFrame, excelExport = True):
 
     return master_highsuccess, master_lowcost, master_bestratio, table_highsucess, table_lowcost, table_bestratio
 
-### --- ### --- ### --- Modeling --- ### --- ### --- ###
+### --- ### --- ### --- Modeling Database--- ### --- ### --- ###
 master = build_database()
 df_highsuccess, df_lowcost, df_bestratio, t_highsuccess, t_lowcost, t_bestratio = filter_database(master)
-plot_database(df_highsuccess, "High Success", (1, 0.7), (40, 90))
-plot_database(df_lowcost, "Low Cost",(1,0.5), (10,40))
-plot_database(df_bestratio, "Best Ratio",(1,0.5), (10,40))
+# plot_database(df_highsuccess, "High Success", (1, 0.7), (40, 90))
+# plot_database(df_lowcost, "Low Cost",(1,0.5), (10,40))
+# plot_database(df_bestratio, "Best Ratio",(1,0.5), (10,40))
+plot_table(t_highsuccess, "Table High Success")
+plot_table(t_lowcost, "Table Low Cost")
+plot_table(t_bestratio, "Table Best Ratio")
 
-# for model in range(minmax_model[0], minmax_model[1]):
-#     for rep in range(minmax_repl[0], minmax_repl[1]):
-#         print(f"Working on lineplots for ROBOT{model}_REP{rep}")
-#         build_lineplot(model,rep, "URC Mod")
-#         build_lineplot_compare(model,rep)
-
+### --- ### --- ### --- Modeling Fronts --- ### --- ### --- ###
+tasks = [(model, rep) for model in range(minmax_model[0], minmax_model[1]) for rep in range(minmax_repl[0], minmax_repl[1])]
 
 def process_lineplots(args):
     model, rep = args
@@ -283,9 +281,15 @@ def process_lineplots(args):
     build_lineplot(model, rep, "URC Mod")
     build_lineplot_compare(model, rep)
 
-# Create a list of all tasks
-tasks = [(model, rep) for model in range(minmax_model[0], minmax_model[1]) for rep in range(minmax_repl[0], minmax_repl[1])]
+#Backup
+# for model, rep in tasks:
+#     process_lineplots((model, rep))
 
-# Use all available processors
-with mp.Pool(processes=2) as pool:
-    pool.map(process_lineplots, tasks)
+#Multithread
+# with concurrent.futures.ProcessPoolExecutor() as executor:    
+#    executor.map(process_lineplots, tasks)
+
+
+### TIME ###
+finish = time.perf_counter()
+print(f'Finished in {round(finish-start, 2)} second(s)')
