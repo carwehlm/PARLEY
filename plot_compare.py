@@ -1,6 +1,7 @@
 import os, time
 import seaborn as sns
 import matplotlib.pyplot as plt
+import matplotlib.ticker as mtick
 import pandas as pd
 import concurrent.futures
 
@@ -153,41 +154,57 @@ def plot_database(df:pd.DataFrame, output_filename:str, xlim:tuple[float,float],
 
 def plot_table(df:pd.DataFrame, output_filename:str):
     """Function to plot table values graphically"""
-    value_name = "Percentage"
+    
+    value_name_c = "Count"
+    value_name_p = "Percentage"
 
     #Data Selection
-    #df = df.loc[:,tableColumns[3:5]]
-    df = df.loc[:,tableColumns]
-    df.drop(columns=[tableColumns[2],tableColumns[5]], inplace=True)
-    df.reset_index(inplace=True)
-    df = df.melt(columnNames[1], value_name=value_name, var_name=columnNames[0])
+    df_c = df.loc[:,df.columns[0:2]]
+    df_c.reset_index(inplace=True)
+    df_c = df_c.melt(columnNames[1], value_name=value_name_c, var_name=columnNames[0])
+
+    df_p = df.loc[:,tableColumns[3:5]]
+    df_p.reset_index(inplace=True)
+    df_p = df_p.melt(columnNames[1], value_name=value_name_p, var_name=columnNames[0])
 
     #Plotting    
     plt.figure(figsize=(8, 6))
-    # fig, ax1 = plt.subplots()
-    # ax2 = ax1.twinx() # secondary y-axis
+    fig, ax1 = plt.subplots()
+    ax2 = ax1.twinx() # secondary y-axis
 
     # Use lineplot instead of relplot for more customization options
-    #sns.barplot(x='Date', y='Col1', data=df, ax=ax1) # on primary ax1
+    sns.barplot(
+        data=df_c,
+        x=columnNames[1],
+        y=value_name_c,
+        hue=columnNames[0],
+        alpha=0.7,  # Adjust transparency level here
+        ax=ax1
+    )
 
     sns.lineplot(
-        data=df,
+        data=df_p,
         x=columnNames[1],
-        y=value_name,
+        y=value_name_p,
         hue=columnNames[0],
         style=columnNames[0],
         markers=markers,
         dashes=False,
         alpha=0.7,  # Adjust transparency level here
-        markersize=4
+        markersize=4,
+        legend=False,
+        ax=ax2
     )
 
     plt.xlabel('Replication')
-    plt.ylabel('Percentage / Cum. Percentage')
+    plt.ylabel('Cumulative Percentage')
     plt.title(output_filename)
-    plt.ylim([0,100])
-    #plt.legend()
-    plt.grid(True)
+    plt.ylim([0,105])
+    plt.grid(True)      #No Idea
+    ax1.legend(loc='upper left', bbox_to_anchor=(1, 0.94))      #Move legend to right corner
+    ax1.yaxis.set_major_locator(mtick.MaxNLocator(integer=True))    #Set to integers
+    ax2.yaxis.set_major_formatter(mtick.PercentFormatter())     #Set the percentages
+    plt.tight_layout(pad=2.0)   # Use tight_layout to automatically adjust the padding
 
     # Save the plot as an image file
     plt.savefig('plots/compare/' + output_filename + '.pdf')
@@ -205,7 +222,9 @@ def build_database():
             master = pd.concat([master, df, df_original], ignore_index=True)  # Add new and old values together
     
     master.drop_duplicates(inplace=True)
-    
+    #master[columnNames[1]] = master[columnNames[1]].astype(int) +1  #Add one to replications so it goes 1 to 10
+    #master[columnNames[1]] = master[columnNames[1]].astype("category")
+
     print("Database Created")
     return master
 
@@ -259,15 +278,21 @@ def filter_database(master:pd.DataFrame, excelExport = True):
             table_highsucess.to_excel(writer, sheet_name="t_highsuccess")
             table_lowcost.to_excel(writer, sheet_name="t_lowcost")
             table_bestratio.to_excel(writer, sheet_name="t_bestratio")
+    
+    #Export to Latex
+    tableColumns_Tex = ["URC", "URC Mod", tableColumns[0], tableColumns[1]]
+    table_highsucess.loc[:,tableColumns_Tex].to_latex(f"{os.getcwd()}/plots/t_highsuccess.lex", float_format=r"%.2f")
+    table_lowcost.loc[:,tableColumns_Tex].to_latex(f"{os.getcwd()}/plots/t_lowcost.lex", float_format=r"%.2f")
+    table_bestratio.loc[:,tableColumns_Tex].to_latex(f"{os.getcwd()}/plots/t_bestratio.lex", float_format=r"%.2f")
 
     return master_highsuccess, master_lowcost, master_bestratio, table_highsucess, table_lowcost, table_bestratio
 
 ### --- ### --- ### --- Modeling Database--- ### --- ### --- ###
 master = build_database()
 df_highsuccess, df_lowcost, df_bestratio, t_highsuccess, t_lowcost, t_bestratio = filter_database(master)
-# plot_database(df_highsuccess, "High Success", (1, 0.7), (40, 90))
-# plot_database(df_lowcost, "Low Cost",(1,0.5), (10,40))
-# plot_database(df_bestratio, "Best Ratio",(1,0.5), (10,40))
+plot_database(df_highsuccess, "High Success", (1, 0.7), (40, 90))
+plot_database(df_lowcost, "Low Cost",(1,0.5), (10,40))
+plot_database(df_bestratio, "Best Ratio",(1,0.5), (10,40))
 plot_table(t_highsuccess, "Table High Success")
 plot_table(t_lowcost, "Table Low Cost")
 plot_table(t_bestratio, "Table Best Ratio")
