@@ -2,15 +2,16 @@ import os
 import seaborn as sns
 import matplotlib.pyplot as plt
 import pandas as pd
-#import openpyxl as pyxl
+import multiprocessing as mp
 
 #Control Variables - These are used in all following functions and allow dynamic changes.
 folderpath_original = r"/home/arturo/Dokumente/MikeCharlie/Results/Original/data"
 columnNames = ["Model", "Replication", "Type", "Success Chance", "Cost", "Cost-Success ratio"]
+tableColumns = ["URC Percentage", "URC Mod Percentage", "Baseline Percentage", "URC Cum. Percentage", "URC Mod Cum. Percentage", "Baseline Cum. Percentage"]
 markers = {"URC": "^", "URC Mod": "o", "Baseline": "X"}
 boundary_x = (1, 0.5)
 boundary_y = (0, 70)
-minmax_model = (10,81)
+minmax_model = (10,86)
 minmax_repl = (0,10) 
 
 #TODO Change orientation of values so best fit is on the top right
@@ -163,6 +164,35 @@ def plot_database(df:pd.DataFrame, output_filename:str, xlim:tuple[float,float],
     plt.savefig('plots/compare/' + output_filename + '.pdf')
     plt.close()
 
+def plot_table(df:pd.DataFrame, output_filename:str, xlim:tuple[float,float], ylim:tuple[float,float]):
+    """Function to plot table values graphically"""
+
+    plt.figure(figsize=(8, 6))
+
+    # Use lineplot instead of relplot for more customization options
+    sns.lineplot(
+        data=df,
+        x=df.index,
+        y=tableColumns[3],
+        hue=tableColumns,
+        style=tableColumns,
+        markers=markers,
+        dashes=False,
+        alpha=0.7,  # Adjust transparency level here
+        markersize=4 
+    )
+
+    plt.xlabel('Probability of mission success')
+    plt.ylabel('Cost')
+    plt.title(output_filename)
+    plt.xlim(xlim)
+    plt.ylim(ylim)
+    plt.legend()
+    plt.grid(True)
+
+    # Save the plot as an image file
+    plt.savefig('plots/compare/' + output_filename + '.pdf')
+    plt.close()
 
 def build_database():
     """Creates a Databse containing all available Results"""
@@ -181,7 +211,7 @@ def build_database():
     return master
 
 def filter_database(master:pd.DataFrame, excelExport = True):
-    """Filters the Database on the highest values for success, lowest for cost and highest ratio. Return three dataframes and writes to cwd/plots."""
+    """Filters the Database on the highest values for success, lowest for cost and highest ratio. Return three dataframes and 3 summary tables and writes to cwd/plots."""
 
     #So this groups on the type column after baseline, URC, URC Mod and then get the most successful, lowest cost and best ratio replication for each model
     master_highsuccess  = pd.DataFrame(columns=columnNames)
@@ -200,18 +230,27 @@ def filter_database(master:pd.DataFrame, excelExport = True):
 
     #Build tables summarizing the previous results, with min, max, median, average
     #This table counts the replication in which the value, in this case highsuccess, was found. This way we can compare between types at which stage the algorithm reached its optimum
-    master_highsuccess = master_highsuccess.astype({columnNames[1] : "category"})
-    table_highsucess_URC = master_highsuccess.loc[master_highsuccess[columnNames[2]]=="URC"].groupby(columnNames[1])[columnNames[2]].count().rename("URC")
-    table_highsucess_URCmod = master_highsuccess.loc[master_highsuccess[columnNames[2]]=="URC Mod"].groupby(columnNames[1])[columnNames[2]].count().rename("URC Mod")
-    table_highsucess_baseline = master_highsuccess.loc[master_highsuccess[columnNames[2]]=="Baseline"].groupby(columnNames[1])[columnNames[2]].count().rename("Baseline")
-    
-    table_highsucess = pd.DataFrame([table_highsucess_URC, table_highsucess_URCmod, table_highsucess_baseline])
-    table_highsucess = table_highsucess.transpose()
-    total_count = table_highsucess["URC"].sum()
-    table_highsucess["URC Percentage"] = round(table_highsucess["URC"] /total_count * 100, 2)
-    table_highsucess["URC Mod Percentage"] = round(table_highsucess["URC Mod"] /total_count * 100, 2)
-    table_highsucess["Baseline Percentage"] = round(table_highsucess["Baseline"] /total_count * 100, 2)
+    def build_tables(master:pd.DataFrame):
+        master = master.astype({columnNames[1] : "category"})
+        table_URC = master.loc[master[columnNames[2]]=="URC"].groupby(columnNames[1])[columnNames[2]].count().rename("URC")
+        table_URCmod = master.loc[master[columnNames[2]]=="URC Mod"].groupby(columnNames[1])[columnNames[2]].count().rename("URC Mod")
+        table_baseline = master.loc[master[columnNames[2]]=="Baseline"].groupby(columnNames[1])[columnNames[2]].count().rename("Baseline")
+        
+        table = pd.DataFrame([table_URC, table_URCmod, table_baseline])
+        table = table.transpose()
+        total_count = table["URC"].sum()
+        table[tableColumns[0]] = round(table["URC"] /total_count * 100, 2)
+        table[tableColumns[1]] = round(table["URC Mod"] /total_count * 100, 2)
+        table[tableColumns[2]] = round(table["Baseline"] /total_count * 100, 2)
+        table[tableColumns[3]] = table[tableColumns[0]].cumsum()
+        table[tableColumns[4]] = table[tableColumns[1]].cumsum()
+        table[tableColumns[5]] = table[tableColumns[2]].cumsum()
 
+        return table
+
+    table_highsucess    = build_tables(master_highsuccess)
+    table_lowcost       = build_tables(master_lowcost)
+    table_bestratio     = build_tables(master_bestratio)
 
     if excelExport:
         with pd.ExcelWriter(f"{os.getcwd()}/plots/database.xlsx", mode='w') as writer:     #In order to append onto an existing file an ExcelWrite Object is needed
@@ -219,18 +258,34 @@ def filter_database(master:pd.DataFrame, excelExport = True):
             master_lowcost.to_excel(writer, sheet_name="lowcost")
             master_bestratio.to_excel(writer, sheet_name="bestratio")
             table_highsucess.to_excel(writer, sheet_name="t_highsuccess")
+            table_lowcost.to_excel(writer, sheet_name="t_lowcost")
+            table_bestratio.to_excel(writer, sheet_name="t_bestratio")
 
-    return master_highsuccess, master_lowcost, master_bestratio
+    return master_highsuccess, master_lowcost, master_bestratio, table_highsucess, table_lowcost, table_bestratio
 
 ### --- ### --- ### --- Modeling --- ### --- ### --- ###
 master = build_database()
-df_highsuccess, df_lowcost, df_bestratio = filter_database(master)
+df_highsuccess, df_lowcost, df_bestratio, t_highsuccess, t_lowcost, t_bestratio = filter_database(master)
 plot_database(df_highsuccess, "High Success", (1, 0.7), (40, 90))
 plot_database(df_lowcost, "Low Cost",(1,0.5), (10,40))
 plot_database(df_bestratio, "Best Ratio",(1,0.5), (10,40))
 
-for model in range(minmax_model[0], minmax_model[1]):
-    for rep in range(minmax_repl[0], minmax_repl[1]):
-        print(f"Working on ROBOT{model}_REP{rep}")
-        #build_lineplot(model,rep, "URC Mod")
-        #build_lineplot_compare(model,rep)
+# for model in range(minmax_model[0], minmax_model[1]):
+#     for rep in range(minmax_repl[0], minmax_repl[1]):
+#         print(f"Working on lineplots for ROBOT{model}_REP{rep}")
+#         build_lineplot(model,rep, "URC Mod")
+#         build_lineplot_compare(model,rep)
+
+
+def process_lineplots(args):
+    model, rep = args
+    print(f"Working on lineplots for ROBOT{model}_REP{rep}")
+    build_lineplot(model, rep, "URC Mod")
+    build_lineplot_compare(model, rep)
+
+# Create a list of all tasks
+tasks = [(model, rep) for model in range(minmax_model[0], minmax_model[1]) for rep in range(minmax_repl[0], minmax_repl[1])]
+
+# Use all available processors
+with mp.Pool(processes=2) as pool:
+    pool.map(process_lineplots, tasks)
