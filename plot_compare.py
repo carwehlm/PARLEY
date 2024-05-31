@@ -286,6 +286,7 @@ def filter_database(master:pd.DataFrame, excelExport = True):
 
     if excelExport:
         with pd.ExcelWriter(f"{folderpath_compare}/database.xlsx", mode='w') as writer:     #In order to append onto an existing file an ExcelWrite Object is needed
+            master.to_excel(writer, sheet_name="master")
             master_highsuccess.to_excel(writer, sheet_name="highsuccess")
             master_lowcost.to_excel(writer, sheet_name="lowcost")
             master_bestratio.to_excel(writer, sheet_name="bestratio")
@@ -321,8 +322,8 @@ def process_lineplots(args):
     build_lineplot_compare(model, rep)
 
 #Backup
-for model, rep in tasks:
-    process_lineplots((model, rep))
+# for model, rep in tasks:
+#     process_lineplots((model, rep))
 
 # #Multithread
 # with concurrent.futures.ProcessPoolExecutor() as executor:    
