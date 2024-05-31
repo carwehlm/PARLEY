@@ -10,7 +10,7 @@ import plot_fronts, baseline_generator
 
 max_replications = 10       #This changes the Number of REPs.   -Should be 10
 min_maps = 86               #This changes the Number of ROBOTs. -Should be 10
-max_maps = 91               #This changes the Number of ROBOTs. -Should be 100
+max_maps = 94               #This changes the Number of ROBOTs. -Should be 100
 data_folder_path = 'Applications/EvoChecker-master/data'
 evo_folder_path = "Applications/EvoChecker-master"
 
