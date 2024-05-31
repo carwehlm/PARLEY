@@ -8,6 +8,7 @@ import concurrent.futures
 #Control Variables - These are used in all following functions and allow dynamic changes.
 start = time.perf_counter()
 folderpath_original = r"/home/arturo/Dokumente/MikeCharlie/Results/Original/data"
+folderpath_compare = f"{os.getcwd()}/plots/compare"
 columnNames = ["Model", "Replication", "Type", "Success Chance", "Cost", "Cost-Success ratio"]
 tableColumns = ["URC Percentage", "URC Mod Percentage", "Baseline Percentage", "URC Cum. Percentage", "URC Mod Cum. Percentage", "Baseline Cum. Percentage"]
 markers = {"URC": "^", "URC Mod": "o", "Baseline": "X", 
@@ -15,8 +16,18 @@ markers = {"URC": "^", "URC Mod": "o", "Baseline": "X",
            "URC Cum. Percentage": "^", "URC Mod Cum. Percentage": "o", "Baseline Cum. Percentage": "X"}
 boundary_x = (1, 0.5)
 boundary_y = (0, 70)
-minmax_model = (10,86)
+minmax_model = (10,94)
 minmax_repl = (0,10) 
+
+palette = {
+    'URC'                       : 'tab:green',
+    'URC Percentage'            : 'tab:green',
+    'URC Cum. Percentage'       : 'tab:green',
+    'URC Mod'                   : 'tab:blue',
+    'URC Mod Percentage'        : 'tab:blue',
+    'URC Mod Cum. Percentage'   : 'tab:blue',
+    "Baseline"                  : "tab:red"
+}
 
 #TODO Change orientation of values so best fit is on the top right
 #TODO Cluster bilden
@@ -85,7 +96,7 @@ def build_lineplot(m, replication, ptype):
     sns.relplot(
     data=df, kind="line",
     x=columnNames[3], y=columnNames[4], hue=columnNames[2], style=columnNames[2], markers=markers,
-    dashes=False,)
+    dashes=False,palette=palette)
 
     plt.xlabel('Probability of mission success')
     plt.ylabel('Cost')
@@ -97,7 +108,7 @@ def build_lineplot(m, replication, ptype):
     plt.tight_layout(rect=[0, 0, 1, 0.95])
 
     # Save the plot as an image file
-    plt.savefig(f'plots/compare/fronts/{output_filename}.pdf')
+    plt.savefig(f'{folderpath_compare}/fronts/{output_filename}.pdf')
     plt.close()
 
 def build_lineplot_compare(m, replication, output_filename=None):
@@ -119,7 +130,8 @@ def build_lineplot_compare(m, replication, output_filename=None):
         markers=markers,
         dashes=False,
         alpha=0.7,  # Adjust transparency level here
-        markersize=4 
+        markersize=4,
+        palette=palette 
     )
 
     plt.xlabel('Probability of mission success')
@@ -132,14 +144,14 @@ def build_lineplot_compare(m, replication, output_filename=None):
     plt.grid(True)
 
     # Save the plot as an image file
-    plt.savefig(f'plots/compare/fronts/{output_filename}.pdf')
+    plt.savefig(f'{folderpath_compare}/fronts/{output_filename}.pdf')
     plt.close()
 
 def plot_database(df:pd.DataFrame, output_filename:str, xlim:tuple[float,float], ylim:tuple[float,float]):
     """Function to plot database valus graphically"""
 
     plt.figure(figsize=(8, 8))
-    sns.scatterplot(data=df, x=columnNames[3], y=columnNames[4], style=columnNames[2], markers=markers, hue=columnNames[2], size=columnNames[5])
+    sns.scatterplot(data=df, x=columnNames[3], y=columnNames[4], style=columnNames[2], markers=markers, hue=columnNames[2], size=columnNames[5], palette=palette)
     plt.xlabel('Probability of mission success')
     plt.ylabel('Cost')
     plt.title(output_filename)
@@ -149,7 +161,7 @@ def plot_database(df:pd.DataFrame, output_filename:str, xlim:tuple[float,float],
     plt.grid(True)
 
     # Save the plot as an image file
-    plt.savefig('plots/compare/' + output_filename + '.pdf')
+    plt.savefig(f'{folderpath_compare}/{output_filename}.pdf')
     plt.close()
 
 def plot_table(df:pd.DataFrame, output_filename:str):
@@ -179,7 +191,8 @@ def plot_table(df:pd.DataFrame, output_filename:str):
         y=value_name_c,
         hue=columnNames[0],
         alpha=0.7,  # Adjust transparency level here
-        ax=ax1
+        ax=ax1,
+        palette=palette
     )
 
     sns.lineplot(
@@ -193,7 +206,8 @@ def plot_table(df:pd.DataFrame, output_filename:str):
         alpha=0.7,  # Adjust transparency level here
         markersize=4,
         legend=False,
-        ax=ax2
+        ax=ax2,
+        palette=palette
     )
 
     plt.xlabel('Replication')
@@ -207,7 +221,7 @@ def plot_table(df:pd.DataFrame, output_filename:str):
     plt.tight_layout(pad=2.0)   # Use tight_layout to automatically adjust the padding
 
     # Save the plot as an image file
-    plt.savefig('plots/compare/' + output_filename + '.pdf')
+    plt.savefig(f'{folderpath_compare}/{output_filename}.pdf')
     plt.close()
 
 def build_database():
@@ -271,7 +285,7 @@ def filter_database(master:pd.DataFrame, excelExport = True):
     table_bestratio     = build_tables(master_bestratio)
 
     if excelExport:
-        with pd.ExcelWriter(f"{os.getcwd()}/plots/database.xlsx", mode='w') as writer:     #In order to append onto an existing file an ExcelWrite Object is needed
+        with pd.ExcelWriter(f"{folderpath_compare}/database.xlsx", mode='w') as writer:     #In order to append onto an existing file an ExcelWrite Object is needed
             master_highsuccess.to_excel(writer, sheet_name="highsuccess")
             master_lowcost.to_excel(writer, sheet_name="lowcost")
             master_bestratio.to_excel(writer, sheet_name="bestratio")
@@ -281,9 +295,9 @@ def filter_database(master:pd.DataFrame, excelExport = True):
     
     #Export to Latex
     tableColumns_Tex = ["URC", "URC Mod", tableColumns[0], tableColumns[1]]
-    table_highsucess.loc[:,tableColumns_Tex].to_latex(f"{os.getcwd()}/plots/t_highsuccess.lex", float_format=r"%.2f")
-    table_lowcost.loc[:,tableColumns_Tex].to_latex(f"{os.getcwd()}/plots/t_lowcost.lex", float_format=r"%.2f")
-    table_bestratio.loc[:,tableColumns_Tex].to_latex(f"{os.getcwd()}/plots/t_bestratio.lex", float_format=r"%.2f")
+    table_highsucess.loc[:,tableColumns_Tex].to_latex(f"{folderpath_compare}/t_highsuccess.tex", float_format=r"%.2f")
+    table_lowcost.loc[:,tableColumns_Tex].to_latex(f"{folderpath_compare}/t_lowcost.tex", float_format=r"%.2f")
+    table_bestratio.loc[:,tableColumns_Tex].to_latex(f"{folderpath_compare}/t_bestratio.tex", float_format=r"%.2f")
 
     return master_highsuccess, master_lowcost, master_bestratio, table_highsucess, table_lowcost, table_bestratio
 
@@ -307,10 +321,10 @@ def process_lineplots(args):
     build_lineplot_compare(model, rep)
 
 #Backup
-# for model, rep in tasks:
-#     process_lineplots((model, rep))
+for model, rep in tasks:
+    process_lineplots((model, rep))
 
-#Multithread
+# #Multithread
 # with concurrent.futures.ProcessPoolExecutor() as executor:    
 #    executor.map(process_lineplots, tasks)
 
