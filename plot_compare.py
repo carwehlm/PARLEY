@@ -16,7 +16,7 @@ markers = {"URC": "^", "URC Mod": "o", "Baseline": "X",
            "URC Cum. Percentage": "^", "URC Mod Cum. Percentage": "o", "Baseline Cum. Percentage": "X"}
 boundary_x = (1, 0.5)
 boundary_y = (0, 70)
-minmax_model = (10,94)
+minmax_model = (10,100)
 minmax_repl = (0,10) 
 
 palette = {
@@ -322,8 +322,8 @@ def process_lineplots(args):
     build_lineplot_compare(model, rep)
 
 #Backup
-# for model, rep in tasks:
-#     process_lineplots((model, rep))
+for model, rep in tasks:
+    process_lineplots((model, rep))
 
 # #Multithread
 # with concurrent.futures.ProcessPoolExecutor() as executor:    
