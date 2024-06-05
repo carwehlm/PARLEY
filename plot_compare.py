@@ -93,10 +93,18 @@ def build_lineplot(m, replication, ptype):
     df = plot_pareto_front(m,replication, ptype=ptype)
 
     plt.figure(figsize=(8, 6))
-    sns.relplot(
-    data=df, kind="line",
-    x=columnNames[3], y=columnNames[4], hue=columnNames[2], style=columnNames[2], markers=markers,
-    dashes=False,palette=palette)
+    sns.lineplot(
+        data=df,
+        x=columnNames[3],
+        y=columnNames[4],
+        hue=columnNames[2],
+        style=columnNames[2],
+        markers=markers,
+        dashes=False,
+        alpha=0.7,  # Adjust transparency level here
+        markersize=4,
+        palette=palette 
+    )
 
     plt.xlabel('Probability of mission success')
     plt.ylabel('Cost')
