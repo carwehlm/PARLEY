@@ -11,6 +11,7 @@ folderpath_original = r"/home/arturo/Dokumente/MikeCharlie/Results/Original/data
 folderpath_compare = f"{os.getcwd()}/plots/compare"
 columnNames = ["Model", "Replication", "Type", "Success Chance", "Cost", "Cost-Success ratio"]
 tableColumns = ["URC Percentage", "URC Mod Percentage", "Baseline Percentage", "URC Cum. Percentage", "URC Mod Cum. Percentage", "Baseline Cum. Percentage"]
+mainLabels = ["URC", "URC Mod", "Baseline"]
 markers = {"URC": "^", "URC Mod": "o", "Baseline": "X", 
            "URC Percentage": "^", "URC Mod Percentage": "o", "Baseline Percentage": "X",
            "URC Cum. Percentage": "^", "URC Mod Cum. Percentage": "o", "Baseline Cum. Percentage": "X"}
@@ -89,20 +90,18 @@ def plot_pareto_front(m:int, replication:int, ptype:str, header=True, file_path=
 
     return df
 
-def build_lineplot(m, replication, ptype):
+def build_plot(m, replication, ptype):
     df = plot_pareto_front(m,replication, ptype=ptype)
 
     plt.figure(figsize=(8, 6))
-    sns.lineplot(
+    sns.scatterplot(
         data=df,
         x=columnNames[3],
         y=columnNames[4],
         hue=columnNames[2],
         style=columnNames[2],
         markers=markers,
-        dashes=False,
         alpha=0.7,  # Adjust transparency level here
-        markersize=4,
         palette=palette 
     )
 
@@ -119,7 +118,7 @@ def build_lineplot(m, replication, ptype):
     plt.savefig(f'{folderpath_compare}/fronts/{output_filename}.pdf')
     plt.close()
 
-def build_lineplot_compare(m, replication, output_filename=None):
+def build_plot_compare(m, replication, output_filename=None):
     df = plot_pareto_front(m, replication, ptype="URC Mod")
     df_original = plot_pareto_front(m, replication, ptype="URC", file_path=f"{folderpath_original}/ROBOT{m}_REP{replication}/NSGAII/")
 
@@ -129,16 +128,14 @@ def build_lineplot_compare(m, replication, output_filename=None):
     plt.figure(figsize=(8, 6))
 
     # Use lineplot instead of relplot for more customization options
-    sns.lineplot(
+    sns.scatterplot(
         data=df,
         x=columnNames[3],
         y=columnNames[4],
         hue=columnNames[2],
         style=columnNames[2],
         markers=markers,
-        dashes=False,
         alpha=0.7,  # Adjust transparency level here
-        markersize=4,
         palette=palette 
     )
 
@@ -272,25 +269,42 @@ def filter_database(master:pd.DataFrame, excelExport = True):
     #This table counts the replication in which the value, in this case highsuccess, was found. This way we can compare between types at which stage the algorithm reached its optimum
     def build_tables(master:pd.DataFrame):
         master = master.astype({columnNames[1] : "category"})
-        table_URC = master.loc[master[columnNames[2]]=="URC"].groupby(columnNames[1])[columnNames[2]].count().rename("URC")
-        table_URCmod = master.loc[master[columnNames[2]]=="URC Mod"].groupby(columnNames[1])[columnNames[2]].count().rename("URC Mod")
-        table_baseline = master.loc[master[columnNames[2]]=="Baseline"].groupby(columnNames[1])[columnNames[2]].count().rename("Baseline")
+        table_URC = master.loc[master[columnNames[2]]==mainLabels[0]].groupby(columnNames[1])[columnNames[2]].count().rename("URC")
+        table_URCmod = master.loc[master[columnNames[2]]==mainLabels[1]].groupby(columnNames[1])[columnNames[2]].count().rename("URC Mod")
+        table_baseline = master.loc[master[columnNames[2]]==mainLabels[2]].groupby(columnNames[1])[columnNames[2]].count().rename("Baseline")
         
         table = pd.DataFrame([table_URC, table_URCmod, table_baseline])
         table = table.transpose()
-        total_count = table["URC"].sum()
-        table[tableColumns[0]] = round(table["URC"] /total_count * 100, 2)
-        table[tableColumns[1]] = round(table["URC Mod"] /total_count * 100, 2)
-        table[tableColumns[2]] = round(table["Baseline"] /total_count * 100, 2)
+        total_count = table[mainLabels[0]].sum()
+        table[tableColumns[0]] = round(table[mainLabels[0]] /total_count * 100, 2)
+        table[tableColumns[1]] = round(table[mainLabels[1]] /total_count * 100, 2)
+        table[tableColumns[2]] = round(table[mainLabels[2]] /total_count * 100, 2)
         table[tableColumns[3]] = table[tableColumns[0]].cumsum()
         table[tableColumns[4]] = table[tableColumns[1]].cumsum()
         table[tableColumns[5]] = table[tableColumns[2]].cumsum()
 
         return table
 
+    def summarize_tables(master:pd.DataFrame, flavour:str):
+        master = master.astype({columnNames[1] : "category"})
+        table_URC       = master.loc[master[columnNames[2]]==mainLabels[0]].loc[:,flavour].describe()
+        table_URCmod    = master.loc[master[columnNames[2]]==mainLabels[1]].loc[:,flavour].describe()
+        table_baseline  = master.loc[master[columnNames[2]]==mainLabels[2]].loc[:,flavour].describe()
+        
+        description = pd.DataFrame([table_URC, table_URCmod, table_baseline])
+        description.drop(columns=["count"], inplace=True)
+        description.set_index([mainLabels[0:3]], inplace=True)
+        description.index.name = flavour
+
+        return description
+
     table_highsucess    = build_tables(master_highsuccess)
     table_lowcost       = build_tables(master_lowcost)
     table_bestratio     = build_tables(master_bestratio)
+    
+    desc_table_highsucess    = summarize_tables(master_highsuccess, columnNames[3])
+    desc_table_lowcost       = summarize_tables(master_lowcost, columnNames[4])
+    desc_table_bestratio     = summarize_tables(master_bestratio, columnNames[5])
 
     if excelExport:
         with pd.ExcelWriter(f"{folderpath_compare}/database.xlsx", mode='w') as writer:     #In order to append onto an existing file an ExcelWrite Object is needed
@@ -303,12 +317,18 @@ def filter_database(master:pd.DataFrame, excelExport = True):
             table_bestratio.to_excel(writer, sheet_name="t_bestratio")
     
     #Export to Latex
-    tableColumns_Tex = ["URC", "URC Mod", tableColumns[0], tableColumns[1]]
-    table_highsucess.loc[:,tableColumns_Tex].to_latex(f"{folderpath_compare}/t_highsuccess.tex", float_format=r"%.2f")
-    table_lowcost.loc[:,tableColumns_Tex].to_latex(f"{folderpath_compare}/t_lowcost.tex", float_format=r"%.2f")
-    table_bestratio.loc[:,tableColumns_Tex].to_latex(f"{folderpath_compare}/t_bestratio.tex", float_format=r"%.2f")
+    
+    desc_table_highsucess.to_latex(f"{folderpath_compare}/t_highsuccess.tex", float_format=r"%.4f", escape=True, caption="High Success Comparison Summary")
+    desc_table_lowcost.to_latex(f"{folderpath_compare}/t_lowcost.tex", float_format=r"%.2f", escape=True, caption="Low Cost Comparison Summary")
+    desc_table_bestratio.to_latex(f"{folderpath_compare}/t_bestratio.tex", float_format=r"%.4f", escape=True, caption="Best Ratio Comparison Summary")
 
     return master_highsuccess, master_lowcost, master_bestratio, table_highsucess, table_lowcost, table_bestratio
+
+def process_lineplots(args):
+    model, rep = args
+    print(f"Working on lineplots for ROBOT{model}_REP{rep}")
+    build_plot(model, rep, "URC Mod")
+    build_plot_compare(model, rep)
 
 ### --- ### --- ### --- Modeling Database--- ### --- ### --- ###
 master = build_database()
@@ -323,15 +343,10 @@ plot_table(t_bestratio, "Table Best Ratio")
 ### --- ### --- ### --- Modeling Fronts --- ### --- ### --- ###
 tasks = [(model, rep) for model in range(minmax_model[0], minmax_model[1]) for rep in range(minmax_repl[0], minmax_repl[1])]
 
-def process_lineplots(args):
-    model, rep = args
-    print(f"Working on lineplots for ROBOT{model}_REP{rep}")
-    build_lineplot(model, rep, "URC Mod")
-    build_lineplot_compare(model, rep)
 
-#Backup
-for model, rep in tasks:
-    process_lineplots((model, rep))
+# Single Thread
+# for model, rep in tasks:
+#     process_lineplots((model, rep))
 
 # #Multithread
 # with concurrent.futures.ProcessPoolExecutor() as executor:    
