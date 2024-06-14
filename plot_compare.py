@@ -3,6 +3,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
 import pandas as pd
+import numpy as np
 import concurrent.futures
 
 #Control Variables - These are used in all following functions and allow dynamic changes.
@@ -213,7 +214,7 @@ def plot_table(df:pd.DataFrame, output_filename:str):
         legend=False,
         ax=ax2,
         palette=palette
-    )
+    )   
 
     plt.xlabel('Replication')
     plt.ylabel('Cumulative Percentage')
@@ -223,6 +224,8 @@ def plot_table(df:pd.DataFrame, output_filename:str):
     ax1.legend(loc='upper left', bbox_to_anchor=(1, 0.94))      #Move legend to right corner
     ax1.yaxis.set_major_locator(mtick.MaxNLocator(integer=True))    #Set to integers
     ax2.yaxis.set_major_formatter(mtick.PercentFormatter())     #Set the percentages
+    custom_labels = ['1st', '2nd', '3rd', '4th', '5th', "6th", "7th", "8th", "9th", "10th"]
+    ax1.set_xticklabels(custom_labels) # Custom x-axis labels
     plt.tight_layout(pad=2.0)   # Use tight_layout to automatically adjust the padding
 
     # Save the plot as an image file
