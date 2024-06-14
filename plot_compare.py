@@ -241,6 +241,7 @@ def build_database():
             master = pd.concat([master, df, df_original], ignore_index=True)  # Add new and old values together
     
     master.drop_duplicates(inplace=True)
+    master.dropna(axis="index", how="any", inplace=True)
     #master[columnNames[1]] = master[columnNames[1]].astype(int) +1  #Add one to replications so it goes 1 to 10
     #master[columnNames[1]] = master[columnNames[1]].astype("category")
 
