@@ -154,7 +154,7 @@ def build_plot_compare(m, replication, output_filename=None):
     plt.close()
 
 def plot_database(df:pd.DataFrame, output_filename:str, xlim:tuple[float,float], ylim:tuple[float,float]):
-    """Function to plot database valus graphically"""
+    """Function to plot database values graphically"""
 
     plt.figure(figsize=(8, 8))
     sns.scatterplot(data=df, x=columnNames[3], y=columnNames[4], style=columnNames[2], markers=markers, hue=columnNames[2], size=columnNames[5], palette=palette)
@@ -164,6 +164,20 @@ def plot_database(df:pd.DataFrame, output_filename:str, xlim:tuple[float,float],
     plt.xlim(xlim)
     plt.ylim(ylim)
     plt.legend()
+    plt.grid(True)
+
+    # Save the plot as an image file
+    plt.savefig(f'{folderpath_compare}/{output_filename}.pdf')
+    plt.close()
+
+def boxplot_database(df:pd.DataFrame, output_filename:str, ylabel:str):
+    """Function to boxplot database values graphically"""
+
+    plt.figure(figsize=(8, 8))
+    sns.boxplot(data=df, x=columnNames[2], y=ylabel, hue=columnNames[2], palette=palette)
+    plt.xlabel(columnNames[2])
+    plt.ylabel(ylabel)
+    plt.title(output_filename)
     plt.grid(True)
 
     # Save the plot as an image file
@@ -252,7 +266,8 @@ def build_database():
     return master
 
 def filter_database(master:pd.DataFrame, excelExport = True):
-    """Filters the Database on the highest values for success, lowest for cost and highest ratio. Return three dataframes and 3 summary tables and writes to cwd/plots."""
+    """Filters the Database on the highest values for success, lowest for cost and highest ratio. Return three dataframes and 3 summary tables and writes to cwd/plots\n
+    It also creates 3 .tex files with the description of the Table's value."""
 
     #So this groups on the type column after baseline, URC, URC Mod and then get the most successful, lowest cost and best ratio replication for each model
     master_highsuccess  = pd.DataFrame(columns=columnNames)
@@ -270,25 +285,6 @@ def filter_database(master:pd.DataFrame, excelExport = True):
         master_bestratio = pd.concat([master_bestratio,df_bestratio], ignore_index=True)
 
     #Build tables summarizing the previous results, with min, max, median, average
-    #This table counts the replication in which the value, in this case highsuccess, was found. This way we can compare between types at which stage the algorithm reached its optimum
-    def build_tables(master:pd.DataFrame):
-        master = master.astype({columnNames[1] : "category"})
-        table_URC = master.loc[master[columnNames[2]]==mainLabels[0]].groupby(columnNames[1])[columnNames[2]].count().rename("URC")
-        table_URCmod = master.loc[master[columnNames[2]]==mainLabels[1]].groupby(columnNames[1])[columnNames[2]].count().rename("URC Mod")
-        table_baseline = master.loc[master[columnNames[2]]==mainLabels[2]].groupby(columnNames[1])[columnNames[2]].count().rename("Baseline")
-        
-        table = pd.DataFrame([table_URC, table_URCmod, table_baseline])
-        table = table.transpose()
-        total_count = table[mainLabels[0]].sum()
-        table[tableColumns[0]] = round(table[mainLabels[0]] /total_count * 100, 2)
-        table[tableColumns[1]] = round(table[mainLabels[1]] /total_count * 100, 2)
-        table[tableColumns[2]] = round(table[mainLabels[2]] /total_count * 100, 2)
-        table[tableColumns[3]] = table[tableColumns[0]].cumsum()
-        table[tableColumns[4]] = table[tableColumns[1]].cumsum()
-        table[tableColumns[5]] = table[tableColumns[2]].cumsum()
-
-        return table
-
     def summarize_tables(master:pd.DataFrame, flavour:str):
         master = master.astype({columnNames[1] : "category"})
         table_URC       = master.loc[master[columnNames[2]]==mainLabels[0]].loc[:,flavour].describe()
@@ -301,10 +297,6 @@ def filter_database(master:pd.DataFrame, excelExport = True):
         description.index.name = flavour
 
         return description
-
-    table_highsucess    = build_tables(master_highsuccess)
-    table_lowcost       = build_tables(master_lowcost)
-    table_bestratio     = build_tables(master_bestratio)
     
     desc_table_highsucess    = summarize_tables(master_highsuccess, columnNames[3])
     desc_table_lowcost       = summarize_tables(master_lowcost, columnNames[4])
@@ -316,17 +308,13 @@ def filter_database(master:pd.DataFrame, excelExport = True):
             master_highsuccess.to_excel(writer, sheet_name="highsuccess")
             master_lowcost.to_excel(writer, sheet_name="lowcost")
             master_bestratio.to_excel(writer, sheet_name="bestratio")
-            table_highsucess.to_excel(writer, sheet_name="t_highsuccess")
-            table_lowcost.to_excel(writer, sheet_name="t_lowcost")
-            table_bestratio.to_excel(writer, sheet_name="t_bestratio")
     
     #Export to Latex
-    
     desc_table_highsucess.to_latex(f"{folderpath_compare}/t_highsuccess.tex", float_format=r"%.4f", escape=True, caption="High Success Comparison Summary")
     desc_table_lowcost.to_latex(f"{folderpath_compare}/t_lowcost.tex", float_format=r"%.2f", escape=True, caption="Low Cost Comparison Summary")
     desc_table_bestratio.to_latex(f"{folderpath_compare}/t_bestratio.tex", float_format=r"%.4f", escape=True, caption="Best Ratio Comparison Summary")
 
-    return master_highsuccess, master_lowcost, master_bestratio, table_highsucess, table_lowcost, table_bestratio
+    return master_highsuccess, master_lowcost, master_bestratio
 
 def process_lineplots(args):
     model, rep = args
@@ -336,13 +324,13 @@ def process_lineplots(args):
 
 ### --- ### --- ### --- Modeling Database--- ### --- ### --- ###
 master = build_database()
-df_highsuccess, df_lowcost, df_bestratio, t_highsuccess, t_lowcost, t_bestratio = filter_database(master)
+df_highsuccess, df_lowcost, df_bestratio = filter_database(master)
 plot_database(df_highsuccess, "High Success", (1, 0.7), (40, 90))
 plot_database(df_lowcost, "Low Cost",(1,0.5), (10,40))
 plot_database(df_bestratio, "Best Ratio",(1,0.5), (10,40))
-plot_table(t_highsuccess, "Table High Success")
-plot_table(t_lowcost, "Table Low Cost")
-plot_table(t_bestratio, "Table Best Ratio")
+boxplot_database(df_highsuccess, "High Success Boxplot", columnNames[3])
+boxplot_database(df_lowcost, "Low Cost Boxplot", columnNames[4])
+boxplot_database(df_bestratio, "Best Ratio Boxplot", columnNames[5])
 
 ### --- ### --- ### --- Modeling Fronts --- ### --- ### --- ###
 tasks = [(model, rep) for model in range(minmax_model[0], minmax_model[1]) for rep in range(minmax_repl[0], minmax_repl[1])]
