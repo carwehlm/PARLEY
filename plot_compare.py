@@ -7,7 +7,6 @@ import numpy as np
 import concurrent.futures
 
 #Control Variables - These are used in all following functions and allow dynamic changes.
-start = time.perf_counter()
 folderpath_original = r"/home/arturo/Dokumente/MikeCharlie/Results/Original/data"
 folderpath_compare = f"{os.getcwd()}/plots/compare"
 columnNames = ["Model", "Replication", "Type", "Success Chance", "Cost", "Cost-Success ratio"]
@@ -322,29 +321,33 @@ def process_lineplots(args):
     build_plot(model, rep, "URC Mod")
     build_plot_compare(model, rep)
 
-### --- ### --- ### --- Modeling Database--- ### --- ### --- ###
-master = build_database()
-df_highsuccess, df_lowcost, df_bestratio = filter_database(master)
-plot_database(df_highsuccess, "High Success", (1, 0.7), (40, 90))
-plot_database(df_lowcost, "Low Cost",(1,0.5), (10,40))
-plot_database(df_bestratio, "Best Ratio",(1,0.5), (10,40))
-boxplot_database(df_highsuccess, "High Success Boxplot", columnNames[3])
-boxplot_database(df_lowcost, "Low Cost Boxplot", columnNames[4])
-boxplot_database(df_bestratio, "Best Ratio Boxplot", columnNames[5])
+if __name__ == '__main__':
+    ### TIME ###
+    start = time.perf_counter()
 
-### --- ### --- ### --- Modeling Fronts --- ### --- ### --- ###
-tasks = [(model, rep) for model in range(minmax_model[0], minmax_model[1]) for rep in range(minmax_repl[0], minmax_repl[1])]
+    ### --- ### --- ### --- Modeling Database--- ### --- ### --- ###
+    master = build_database()
+    df_highsuccess, df_lowcost, df_bestratio = filter_database(master)
+    plot_database(df_highsuccess, "High Success", (1, 0.7), (40, 90))
+    plot_database(df_lowcost, "Low Cost",(1,0.5), (10,40))
+    plot_database(df_bestratio, "Best Ratio",(1,0.5), (10,40))
+    boxplot_database(df_highsuccess, "High Success Boxplot", columnNames[3])
+    boxplot_database(df_lowcost, "Low Cost Boxplot", columnNames[4])
+    boxplot_database(df_bestratio, "Best Ratio Boxplot", columnNames[5])
 
-
-# Single Thread
-# for model, rep in tasks:
-#     process_lineplots((model, rep))
-
-# #Multithread
-# with concurrent.futures.ProcessPoolExecutor() as executor:    
-#    executor.map(process_lineplots, tasks)
+    ### --- ### --- ### --- Modeling Fronts --- ### --- ### --- ###
+    tasks = [(model, rep) for model in range(minmax_model[0], minmax_model[1]) for rep in range(minmax_repl[0], minmax_repl[1])]
 
 
-### TIME ###
-finish = time.perf_counter()
-print(f'Finished in {round(finish-start, 2)} second(s)')
+    ### --- ### --- ### --- Single Thread --- ### --- ### --- ###
+    # for model, rep in tasks:
+    #     process_lineplots((model, rep))
+
+    ### --- ### --- ### --- Multithread --- ### --- ### --- ###
+    # with concurrent.futures.ProcessPoolExecutor() as executor:    
+    #    executor.map(process_lineplots, tasks)
+
+
+    ### TIME ###
+    finish = time.perf_counter()
+    print(f'Finished in {round(finish-start, 2)} second(s)')
