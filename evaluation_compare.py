@@ -4,6 +4,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from deap.tools._hypervolume.pyhv import hypervolume
 from scipy.stats import wilcoxon, anderson, mannwhitneyu
+import pandas as pd
 
 #Plot Paras
 MAXIMUM_SPREAD_VALUE = 1.5
@@ -12,6 +13,7 @@ plt.rcParams.update({'font.size': 16})
 # Specify the paths to CSV files and the file containing expected values
 urcmod_fronts_dir = r'Applications/EvoChecker-master/data'
 urc_fronts_dir = r'/home/arturo/Dokumente/MikeCharlie/Results/Original/data'
+folderpath_compare = f"{os.getcwd()}/plots/compare"
 
 # Runtime paras
 minmax_model = (10,100)
@@ -22,6 +24,25 @@ acceptable_intervals = [(0.8, 100), (0.8, 80), (0.8, 60),
 
 # Select the maps shown in the plots (if too many maps)
 selected_maps = range(minmax_model[1]-10)
+
+#Label Paras
+label_h = "higher"
+label_l = "lower"
+label_n = "no_difference"
+label_hv = "HV"
+label_sp = "SP"
+
+#Init Dictionary of Results
+cost = [60, 80, 100]
+success = [0.6, 0.7, 0.8]
+gains = [label_hv, label_sp]
+RESULTS = {}
+for s in success:
+    RESULTS[s] = {}
+    for g in gains:
+        RESULTS[s][g] = {}
+        for c in cost:
+            RESULTS[s][g][c] = {}
 
 
 def is_dominated(x, y, data):
@@ -111,7 +132,7 @@ def perform_mann_whitney_u_test(data, alpha=0.05):
     Returns:
     - results: Dictionary containing the results for each map, categorizing as 'better', 'worse', or 'no difference'.
     """
-    results = {'higher': 0, 'lower': 0, 'no_difference': 0}
+    results = {label_h: 0, label_l: 0, label_n: 0}
 
     for map_data in data:
         statistic, p_value = mannwhitneyu(map_data, np.zeros_like(map_data), alternative='two-sided')
@@ -119,11 +140,11 @@ def perform_mann_whitney_u_test(data, alpha=0.05):
 
         if p_value < alpha:
             if mean_difference > 0:
-                results['higher'] += 1
+                results[label_h] += 1
             elif mean_difference < 0:
-                results['lower'] += 1
+                results[label_l] += 1
         else:
-            results['no_difference'] += 1
+            results[label_n] += 1
 
     return results
 
@@ -163,7 +184,7 @@ def create_comparison_box_plots(data1:list[list], data2:list[list], selected_map
 
 
 def build_evaldata(acceptable_interval:[float, int], max_replications:int, maps:int, fronts_dir:str):
-    print("Start build evaluation data")
+    #print("Start build evaluation data")
     ref_point = np.array(acceptable_interval)
 
     hv_map = []
@@ -232,25 +253,44 @@ def build_evaldata(acceptable_interval:[float, int], max_replications:int, maps:
     spread_gain     = [[umc - baseline for umc, baseline in zip(repetition, baseline_spread)] for repetition in umc_spread]
     hv_gain         = [[umc - baseline for umc, baseline in zip(repetition, baseline_hv)] for repetition in umc_hv]
 
-
-
-    print(perform_mann_whitney_u_test(spread_gain))
-    print(perform_mann_whitney_u_test(hv_gain))
-
-    print("Finsh evaluation main")
+    #print("Finsh evaluation main")
 
     return spread_gain, hv_gain
 
+def parse_evaldata(acceptable_interval, spread_gain, hv_gain):
+    sp_results = perform_mann_whitney_u_test(spread_gain)
+    hv_results = perform_mann_whitney_u_test(hv_gain)
+
+    print(sp_results)
+    print(hv_results)
+
+    RESULTS[acceptable_interval[0]][label_sp][acceptable_interval[1]] = f"{sp_results[label_h]}/{sp_results[label_l]}/{sp_results[label_n]}"
+    RESULTS[acceptable_interval[0]][label_hv][acceptable_interval[1]] = f"{hv_results[label_h]}/{hv_results[label_l]}/{hv_results[label_n]}"
 
 if __name__ == '__main__':
+    print("Runtime Start")
+
     for acceptable_interval in acceptable_intervals:
         urcmod_spread_gain, urcmod_hv_gain      = build_evaldata(acceptable_interval, minmax_repl[1], minmax_model[1], urcmod_fronts_dir)
         urc_spread_gain, urc_hv_gain            = build_evaldata(acceptable_interval, minmax_repl[1], minmax_model[1], urc_fronts_dir)
 
-        # Create box plots for spread gains
+        print(f"\nParse evaldata URC Mod {acceptable_interval[0]} - {acceptable_interval[1]}")
+        parse_evaldata(acceptable_interval, urcmod_spread_gain, urcmod_hv_gain)
+        # print(f"Parse evaldata URC {acceptable_interval[0]} - {acceptable_interval[1]}")
+        # parse_evaldata(acceptable_interval, urc_spread_gain, urc_hv_gain)
+        print("\n")
+        
+        #Create box plots for spread gains
         create_comparison_box_plots(urcmod_spread_gain, urc_spread_gain, selected_maps, 'Spread-Gains',
                                     f'{acceptable_interval[0]}-{acceptable_interval[1]}')
 
-        # Create box plots for hypervolume gains
+        #Create box plots for hypervolume gains
         create_comparison_box_plots(urcmod_hv_gain, urc_hv_gain, selected_maps, 'Hypervolume-Gains',
                                     f'{acceptable_interval[0]}-{acceptable_interval[1]}')
+    
+
+    flat_data = { (success, gains): RESULTS[success][gains] for success in RESULTS.keys() for gains in RESULTS[success].keys() }
+    df = pd.DataFrame.from_dict(flat_data, orient='index')
+    df.to_latex(f"{folderpath_compare}/spread_hypervolume.tex", float_format=r"%.2f", escape=True, caption="Hypervolume and Spread")
+
+    print("Runtime End")
