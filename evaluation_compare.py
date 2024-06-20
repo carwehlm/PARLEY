@@ -260,20 +260,19 @@ def build_evaldata_baseline(acceptable_interval:[float, int], max_replications:i
 
     return spread_gain, hv_gain
 
-def build_evaldata_compare(acceptable_interval:[float, int], max_replications:int, maps:int, umc_fronts_dir:str, compare_fronts_dir:str):
-    """This takes the values out of data looking at each rep and map and calculates the spread and hypervolume against another complete data set"""
+def build_evaldata_compare(acceptable_interval:[float, int], max_replications:int, maps:int, compare1_fronts_dir:str, compare2_fronts_dir:str):
+    """This takes the values out of data looking at each rep and map and calculates the spread and hypervolume against another complete data set\n
+    The difference is calculated as COMPARE1 minus COMPARE2"""
     #print("Start build evaluation data")
     ref_point = np.array(acceptable_interval)
 
-    hv_map = []
-    compare_hv = []
-    compare_spread = []
-    umc_hv = []
-    umc_spread = []
+    compare1_hv = []
+    compare1_spread = []
+    compare2_hv = []
+    compare2_spread = []
 
-    # for each map
+    # for each map COMPARE1
     for m in range(10, maps):
-        hv_rep = 0
         rep_hv = []
         rep_spread = []
 
@@ -282,17 +281,16 @@ def build_evaldata_compare(acceptable_interval:[float, int], max_replications:in
             # Read the expected values from the external file (excluding the first line)
             pareto_data = []
             filename = ""
-            for filename_ in os.listdir(f'{umc_fronts_dir}/ROBOT{m}_REP{rep}/NSGAII/'):
+            for filename_ in os.listdir(f'{compare1_fronts_dir}/ROBOT{m}_REP{rep}/NSGAII/'):
                 if "Front" in filename_:
                     filename = filename_
 
-            with open(f"{umc_fronts_dir}/ROBOT{m}_REP{rep}/NSGAII/{filename}", 'r') as f:
+            with open(f"{compare1_fronts_dir}/ROBOT{m}_REP{rep}/NSGAII/{filename}", 'r') as f:
                 next(f)  # Skip the first line
                 for line in f:
                     values = line.strip().split('\t')
-                    if len(values) >= 2 and float(values[0]) > acceptable_interval[0] and float(values[1]) < \
-                            acceptable_interval[1]:
-                        pareto_data.append((1 - float(values[0]), float(values[1])))
+                    if len(values) >= 2 and float(values[0]) > acceptable_interval[0] and float(values[1]) < acceptable_interval[1]:    #If its inside Intervals
+                        pareto_data.append((1 - float(values[0]), float(values[1])))    #Append Success and Cost
 
                 # Convert the pareto_data to a NumPy array
                 pareto_array = np.array(filter_dominated_points(pareto_data))
@@ -305,15 +303,54 @@ def build_evaldata_compare(acceptable_interval:[float, int], max_replications:in
                     pareto_array = pareto_array[np.argsort(pareto_array[:, 0])]
                     hv = hypervolume(np.array(pareto_array), np.array(ref_point))
                     rep_spread.append(compute_spread(pareto_array))
-                hv_rep += hv - hv_periodic
+                
                 rep_hv.append(hv)
-        umc_spread.append(rep_spread)
-        umc_hv.append(rep_hv)
-        hv_map.append(hv_rep / 10)
+
+        compare1_spread.append(rep_spread)
+        compare1_hv.append(rep_hv)
+
+   # for each map COMPARE2
+    for m in range(10, maps):
+        rep_hv = []
+        rep_spread = []
+
+        # for each replication
+        for rep in range(0, max_replications):
+            # Read the expected values from the external file (excluding the first line)
+            pareto_data = []
+            filename = ""
+            for filename_ in os.listdir(f'{compare2_fronts_dir}/ROBOT{m}_REP{rep}/NSGAII/'):
+                if "Front" in filename_:
+                    filename = filename_
+
+            with open(f"{compare2_fronts_dir}/ROBOT{m}_REP{rep}/NSGAII/{filename}", 'r') as f:
+                next(f)  # Skip the first line
+                for line in f:
+                    values = line.strip().split('\t')
+                    if len(values) >= 2 and float(values[0]) > acceptable_interval[0] and float(values[1]) < acceptable_interval[1]:    #If its inside Intervals
+                        pareto_data.append((1 - float(values[0]), float(values[1])))    #Append Success and Cost
+
+                # Convert the pareto_data to a NumPy array
+                pareto_array = np.array(filter_dominated_points(pareto_data))
+                # Calculate the hypervolume
+                if len(pareto_array) == 0:
+                    hv = 0
+                    rep_spread.append(MAXIMUM_SPREAD_VALUE)
+                else:
+                    # Sort the Pareto front based on the first objective (probability)
+                    pareto_array = pareto_array[np.argsort(pareto_array[:, 0])]
+                    hv = hypervolume(np.array(pareto_array), np.array(ref_point))
+                    rep_spread.append(compute_spread(pareto_array))
+                
+                rep_hv.append(hv)
+
+        compare2_spread.append(rep_spread)
+        compare2_hv.append(rep_hv)
 
     # Calculate differences for spread and hypervolume
-    spread_gain     = [[umc - baseline for umc, baseline in zip(repetition, compare_spread)] for repetition in umc_spread]
-    hv_gain         = [[umc - baseline for umc, baseline in zip(repetition, compare_hv)] for repetition in umc_hv]
+
+    spread_gain     = np.array(compare1_spread) -  np.array(compare2_spread)
+    hv_gain         = np.array(compare1_hv) - np.array(compare2_hv)
 
     #print("Finsh evaluation main")
 
@@ -342,26 +379,34 @@ def export_evaldata(results:dict, filename:str, caption="Hypervolume and Spread"
 
 if __name__ == '__main__':
     print("Runtime Start")
-    results_urcmod = build_resultsframe()
-    results_urc = build_resultsframe()
+    results_urcmod      = build_resultsframe()
+    results_urc         = build_resultsframe()
+    results_compare     = build_resultsframe()
 
     for acceptable_interval in acceptable_intervals:
+        #Here we build the SP and HV Data to create Tables and Boxplots down the road
         urcmod_spread_gain, urcmod_hv_gain      = build_evaldata_baseline(acceptable_interval, minmax_repl[1], minmax_model[1], urcmod_fronts_dir)
         urc_spread_gain, urc_hv_gain            = build_evaldata_baseline(acceptable_interval, minmax_repl[1], minmax_model[1], urc_fronts_dir)
+        compare_spread_gain, compare_hv_gain    = build_evaldata_compare(acceptable_interval, minmax_repl[1], minmax_model[1], urcmod_fronts_dir, urc_fronts_dir)
 
-        print(f"\nParse evaldata URC Mod {acceptable_interval[0]} - {acceptable_interval[1]}")
+        print(f"\nParse evaldata URC Mod to Baseline {acceptable_interval[0]} - {acceptable_interval[1]}")
         results_urcmod =    parse_evaldata(results_urcmod, acceptable_interval, urcmod_spread_gain, urcmod_hv_gain)
-        print(f"Parse evaldata URC {acceptable_interval[0]} - {acceptable_interval[1]}")
-        results_urc =       parse_evaldata(results_urc, acceptable_interval, urc_spread_gain, urc_hv_gain)
-
-        export_evaldata(results_urcmod, "urcmod_spread_hypervolume", "Hypervolume and Spread URC Mod")
-        export_evaldata(results_urc, "urc_spread_hypervolume", "Hypervolume and Spread URC")
         
-        #Create box plots for spread gains
+        print(f"Parse evaldata URC to Baseline {acceptable_interval[0]} - {acceptable_interval[1]}")
+        results_urc =       parse_evaldata(results_urc, acceptable_interval, urc_spread_gain, urc_hv_gain)
+        
+        print(f"Parse evaldata URC Mod to URC {acceptable_interval[0]} - {acceptable_interval[1]}")
+        results_compare =       parse_evaldata(results_compare, acceptable_interval, compare_spread_gain, compare_hv_gain)
+
+        export_evaldata(results_urcmod, "urcmod_spread_hypervolume", "Hypervolume and Spread URC Mod to Baseline")
+        export_evaldata(results_urc, "urc_spread_hypervolume", "Hypervolume and Spread URC to Baseline")
+        export_evaldata(results_compare, "compare_spread_hypervolume", "Hypervolume and Spread URC Mod to URC")
+        
+        #Create box plots for spread gains URC Mod and URC to Baseline
         create_comparison_box_plots(urcmod_spread_gain, urc_spread_gain, selected_maps, 'Spread-Gains',
                                     f'{acceptable_interval[0]}-{acceptable_interval[1]}')
 
-        #Create box plots for hypervolume gains
+        #Create box plots for hypervolume gains URC Mod and URC to Baseline
         create_comparison_box_plots(urcmod_hv_gain, urc_hv_gain, selected_maps, 'Hypervolume-Gains',
                                     f'{acceptable_interval[0]}-{acceptable_interval[1]}')
     
