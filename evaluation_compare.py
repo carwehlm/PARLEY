@@ -36,14 +36,16 @@ label_sp = "SP"
 cost = [60, 80, 100]
 success = [0.6, 0.7, 0.8]
 gains = [label_hv, label_sp]
-RESULTS = {}
-for s in success:
-    RESULTS[s] = {}
-    for g in gains:
-        RESULTS[s][g] = {}
-        for c in cost:
-            RESULTS[s][g][c] = {}
 
+def build_resultsframe():
+    results = {}
+    for s in success:
+        results[s] = {}
+        for g in gains:
+            results[s][g] = {}
+            for c in cost:
+                results[s][g][c] = {}
+    return results
 
 def is_dominated(x, y, data):
     for other_x, other_y in data:
@@ -182,8 +184,8 @@ def create_comparison_box_plots(data1:list[list], data2:list[list], selected_map
     plt.legend(title='Data Source')
     plt.savefig(f'plots/compare/boxplots/{ylabel}_{title[:1]}_{title[2:]}.pdf')
 
-
-def build_evaldata(acceptable_interval:[float, int], max_replications:int, maps:int, fronts_dir:str):
+def build_evaldata_baseline(acceptable_interval:[float, int], max_replications:int, maps:int, fronts_dir:str):
+    """This takes the values out of data looking at each rep and map and calculates the spread and hypervolume against the baseline"""
     #print("Start build evaluation data")
     ref_point = np.array(acceptable_interval)
 
@@ -215,6 +217,7 @@ def build_evaldata(acceptable_interval:[float, int], max_replications:int, maps:
         hv_rep = 0
         rep_hv = []
         rep_spread = []
+
         # for each replication
         for rep in range(0, max_replications):
             # Read the expected values from the external file (excluding the first line)
@@ -257,28 +260,102 @@ def build_evaldata(acceptable_interval:[float, int], max_replications:int, maps:
 
     return spread_gain, hv_gain
 
-def parse_evaldata(acceptable_interval, spread_gain, hv_gain):
+def build_evaldata_compare(acceptable_interval:[float, int], max_replications:int, maps:int, umc_fronts_dir:str, compare_fronts_dir:str):
+    """This takes the values out of data looking at each rep and map and calculates the spread and hypervolume against another complete data set"""
+    #print("Start build evaluation data")
+    ref_point = np.array(acceptable_interval)
+
+    hv_map = []
+    compare_hv = []
+    compare_spread = []
+    umc_hv = []
+    umc_spread = []
+
+    # for each map
+    for m in range(10, maps):
+        hv_rep = 0
+        rep_hv = []
+        rep_spread = []
+
+        # for each replication
+        for rep in range(0, max_replications):
+            # Read the expected values from the external file (excluding the first line)
+            pareto_data = []
+            filename = ""
+            for filename_ in os.listdir(f'{umc_fronts_dir}/ROBOT{m}_REP{rep}/NSGAII/'):
+                if "Front" in filename_:
+                    filename = filename_
+
+            with open(f"{umc_fronts_dir}/ROBOT{m}_REP{rep}/NSGAII/{filename}", 'r') as f:
+                next(f)  # Skip the first line
+                for line in f:
+                    values = line.strip().split('\t')
+                    if len(values) >= 2 and float(values[0]) > acceptable_interval[0] and float(values[1]) < \
+                            acceptable_interval[1]:
+                        pareto_data.append((1 - float(values[0]), float(values[1])))
+
+                # Convert the pareto_data to a NumPy array
+                pareto_array = np.array(filter_dominated_points(pareto_data))
+                # Calculate the hypervolume
+                if len(pareto_array) == 0:
+                    hv = 0
+                    rep_spread.append(MAXIMUM_SPREAD_VALUE)
+                else:
+                    # Sort the Pareto front based on the first objective (probability)
+                    pareto_array = pareto_array[np.argsort(pareto_array[:, 0])]
+                    hv = hypervolume(np.array(pareto_array), np.array(ref_point))
+                    rep_spread.append(compute_spread(pareto_array))
+                hv_rep += hv - hv_periodic
+                rep_hv.append(hv)
+        umc_spread.append(rep_spread)
+        umc_hv.append(rep_hv)
+        hv_map.append(hv_rep / 10)
+
+    # Calculate differences for spread and hypervolume
+    spread_gain     = [[umc - baseline for umc, baseline in zip(repetition, compare_spread)] for repetition in umc_spread]
+    hv_gain         = [[umc - baseline for umc, baseline in zip(repetition, compare_hv)] for repetition in umc_hv]
+
+    #print("Finsh evaluation main")
+
+    return spread_gain, hv_gain
+
+def parse_evaldata(results, acceptable_interval, spread_gain, hv_gain):
+    """Takes the results of the spread and hypervolume  gain and performs a Mann Whitney U Test and returns the results sorted as\n
+    higher, lower or no statistical difference in a dictionary"""
     sp_results = perform_mann_whitney_u_test(spread_gain)
     hv_results = perform_mann_whitney_u_test(hv_gain)
 
     print(sp_results)
     print(hv_results)
 
-    RESULTS[acceptable_interval[0]][label_sp][acceptable_interval[1]] = f"{sp_results[label_h]}/{sp_results[label_l]}/{sp_results[label_n]}"
-    RESULTS[acceptable_interval[0]][label_hv][acceptable_interval[1]] = f"{hv_results[label_h]}/{hv_results[label_l]}/{hv_results[label_n]}"
+    results[acceptable_interval[0]][label_sp][acceptable_interval[1]] = f"{sp_results[label_l]}/{sp_results[label_h]}/{sp_results[label_n]}"
+    results[acceptable_interval[0]][label_hv][acceptable_interval[1]] = f"{hv_results[label_h]}/{hv_results[label_l]}/{hv_results[label_n]}"
+    
+    return(results)
+
+def export_evaldata(results:dict, filename:str, caption="Hypervolume and Spread"):
+    """Exports the result of the evaluation data as LATEX Table"""
+
+    flat_data = {(success, gains): results[success][gains] for success in results.keys() for gains in results[success].keys() }
+    df = pd.DataFrame.from_dict(flat_data, orient='index')
+    df.to_latex(f"{folderpath_compare}/{filename}.tex", float_format=r"%.2f", escape=True, caption=caption)
 
 if __name__ == '__main__':
     print("Runtime Start")
+    results_urcmod = build_resultsframe()
+    results_urc = build_resultsframe()
 
     for acceptable_interval in acceptable_intervals:
-        urcmod_spread_gain, urcmod_hv_gain      = build_evaldata(acceptable_interval, minmax_repl[1], minmax_model[1], urcmod_fronts_dir)
-        urc_spread_gain, urc_hv_gain            = build_evaldata(acceptable_interval, minmax_repl[1], minmax_model[1], urc_fronts_dir)
+        urcmod_spread_gain, urcmod_hv_gain      = build_evaldata_baseline(acceptable_interval, minmax_repl[1], minmax_model[1], urcmod_fronts_dir)
+        urc_spread_gain, urc_hv_gain            = build_evaldata_baseline(acceptable_interval, minmax_repl[1], minmax_model[1], urc_fronts_dir)
 
         print(f"\nParse evaldata URC Mod {acceptable_interval[0]} - {acceptable_interval[1]}")
-        parse_evaldata(acceptable_interval, urcmod_spread_gain, urcmod_hv_gain)
-        # print(f"Parse evaldata URC {acceptable_interval[0]} - {acceptable_interval[1]}")
-        # parse_evaldata(acceptable_interval, urc_spread_gain, urc_hv_gain)
-        print("\n")
+        results_urcmod =    parse_evaldata(results_urcmod, acceptable_interval, urcmod_spread_gain, urcmod_hv_gain)
+        print(f"Parse evaldata URC {acceptable_interval[0]} - {acceptable_interval[1]}")
+        results_urc =       parse_evaldata(results_urc, acceptable_interval, urc_spread_gain, urc_hv_gain)
+
+        export_evaldata(results_urcmod, "urcmod_spread_hypervolume", "Hypervolume and Spread URC Mod")
+        export_evaldata(results_urc, "urc_spread_hypervolume", "Hypervolume and Spread URC")
         
         #Create box plots for spread gains
         create_comparison_box_plots(urcmod_spread_gain, urc_spread_gain, selected_maps, 'Spread-Gains',
@@ -288,9 +365,4 @@ if __name__ == '__main__':
         create_comparison_box_plots(urcmod_hv_gain, urc_hv_gain, selected_maps, 'Hypervolume-Gains',
                                     f'{acceptable_interval[0]}-{acceptable_interval[1]}')
     
-
-    flat_data = { (success, gains): RESULTS[success][gains] for success in RESULTS.keys() for gains in RESULTS[success].keys() }
-    df = pd.DataFrame.from_dict(flat_data, orient='index')
-    df.to_latex(f"{folderpath_compare}/spread_hypervolume.tex", float_format=r"%.2f", escape=True, caption="Hypervolume and Spread")
-
     print("Runtime End")

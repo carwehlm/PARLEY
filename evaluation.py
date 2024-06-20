@@ -228,7 +228,10 @@ def main(max_replications:int, maps:int):
         # perform_wilcoxon_test_against_zero(hv_gain, alternative='greater')
         # perform_wilcoxon_test_against_zero(spread_gain, alternative='less')
 
+        print(acceptable_interval)
         print(perform_mann_whitney_u_test(spread_gain))
         print(perform_mann_whitney_u_test(hv_gain))
 
         print("Finsh evaluation main")
+
+main(10,100)
