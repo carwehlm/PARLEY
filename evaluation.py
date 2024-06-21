@@ -233,5 +233,3 @@ def main(max_replications:int, maps:int):
         print(perform_mann_whitney_u_test(hv_gain))
 
         print("Finsh evaluation main")
-
-main(10,100)
