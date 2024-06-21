@@ -91,11 +91,11 @@ def main():
         # baseline(i)
         set_baseline(i)
         evo_checker(i)
-        fronts(i)
+        #fronts(i)
         print(f'Finished map {i}')
     
     # evaluation
-    evaluation.main(max_replications, max_maps)
+    #evaluation.main(max_replications, max_maps)
     
     print("Finish main")
 

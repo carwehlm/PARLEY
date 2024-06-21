@@ -340,8 +340,8 @@ if __name__ == '__main__':
 
 
     ### --- ### --- ### --- Single Thread --- ### --- ### --- ###
-    # for model, rep in tasks:
-    #     process_lineplots((model, rep))
+    for model, rep in tasks:
+        process_lineplots((model, rep))
 
     ### --- ### --- ### --- Multithread --- ### --- ### --- ###
     # with concurrent.futures.ProcessPoolExecutor() as executor:    

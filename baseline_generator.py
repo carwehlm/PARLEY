@@ -6,16 +6,16 @@ def generateSet(filepath_output):
     baseline = []
     decision_line = ""
 
-    #Decision Lines
-    for i in range(0,10):
-        for a in range(0,10):
-            decision_line = decision_line + f"decision_{i}_{a} "
-    decision_line = decision_line.strip()
+    # #Decision Lines
+    # for i in range(0,10):
+    #     for a in range(0,10):
+    #         decision_line = decision_line + f"decision_{i}_{a} "
+    # decision_line = decision_line.strip()
 
     #baseline.append(decision_line)
 
     #Empty Line
-    #baseline.append("")
+    baseline.append("\n")
 
     #Baseline Values Line
     for i in range(0,11):
