@@ -88,7 +88,7 @@ def main():
     # maps()
     for i in range(min_maps, max_maps):
         # models(i)
-        # baseline(i)
+        baseline(i)
         set_baseline(i)
         evo_checker(i)
         #fronts(i)
