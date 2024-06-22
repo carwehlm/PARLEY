@@ -1,5 +1,4 @@
-import os, shutil
-
+import os, shutil, sys
 import create_maps
 import prism_model_generator
 import umc_synthesis
@@ -9,8 +8,6 @@ import evaluation
 import plot_fronts, baseline_generator
 
 max_replications = 10       #This changes the Number of REPs.   -Should be 10
-min_maps = 10               #This changes the Number of ROBOTs. -Should be 10
-max_maps = 100               #This changes the Number of ROBOTs. -Should be 100
 data_folder_path = 'Applications/EvoChecker-master/data'
 evo_folder_path = "Applications/EvoChecker-master"
 
@@ -82,7 +79,7 @@ def fronts(i):
     print("Finish fronts")
 
 
-def main():
+def main(min_maps, max_maps):
     print("Start main")
     #cleanup()
     # maps()
@@ -96,11 +93,16 @@ def main():
     
     # evaluation
     #evaluation.main(max_replications, max_maps)
-    
     print("Finish main")
 
 
 if __name__ == '__main__':
+    if len(sys.argv) != 3:
+        print(f"Usage: python RQ1_2.py <int1> <int2>")
+        sys.exit(1)
+    min_maps = int(sys.argv[1]) #This changes the Number of ROBOTs. -Starts at 10
+    max_maps = int(sys.argv[2]) #This changes the Number of ROBOTs. -Ends at 100
+             
     os.makedirs('plots/fronts', exist_ok=True)
     os.makedirs('plots/box-plots', exist_ok=True)
-    main()
+    main(min_maps, max_maps)
