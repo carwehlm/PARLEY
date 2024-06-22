@@ -95,6 +95,7 @@ def main(min_maps, max_maps):
     #evaluation.main(max_replications, max_maps)
     print("Finish main")
 
+os.getcwd()
 
 if __name__ == '__main__':
     if len(sys.argv) != 3:
