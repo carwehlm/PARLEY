@@ -47,8 +47,8 @@ def submit_slurm_job(filepath_slurm_script):
         print(f"Error submitting SLURM job: {e}")
 
 if __name__ == '__main__':
-    min_map = 12
-    max_map = 13
+    min_map = 14
+    max_map = 21
     
     #The Whole 10 Reps for a Map take about 60 Minutes in Grünau1
     for i in range(min_map, max_map):
