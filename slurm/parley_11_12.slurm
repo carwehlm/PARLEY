@@ -1,16 +1,16 @@
 #!/bin/bash
-    #SBATCH --job-name=parley_11_12        		# Job name
-    #SBATCH --output=output_11_12.txt               # Standard output file
-    #SBATCH --error=error_11_12.txt          	# Standard error file
-    #SBATCH --time=02:00:00                 		# Time limit (2 hours)
-    #SBATCH --partition=gruenau             		# Partition name
-    #SBATCH --nodes=1                       		# Number of nodes
-    #SBATCH --ntasks=1                      		# Number of tasks
-    #SBATCH --cpus-per-task=16              		# Number of CPU cores per task
-    #SBATCH --mem=128G                      		# Memory per node
+    #SBATCH --job-name=parley_11_12        		                # Job name
+    #SBATCH --output=slurm/logs/output_11_12.txt                # Standard output file
+    #SBATCH --error=slurm/logs/error_11_12.txt          	    # Standard error file
+    #SBATCH --time=02:00:00                 		                    # Time limit (2 hours)
+    #SBATCH --partition=gruenau             		                    # Partition name
+    #SBATCH --nodes=1                       		                    # Number of nodes
+    #SBATCH --ntasks=1                      		                    # Number of tasks
+    #SBATCH --cpus-per-task=16              		                    # Number of CPU cores per task
+    #SBATCH --mem=128G                      		                    # Memory per node
 
-    # Load any required modules (if any)
-    module load python/your_python_version  # Load your specific Python module if needed
+    # Load your specific Python module if needed
+    module load anaconda/2023.03
 
     # Activate the virtual environment
     source /usr/local/anaconda3-2023.03/envs/flair/bin/activate
