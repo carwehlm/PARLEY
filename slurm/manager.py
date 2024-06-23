@@ -8,11 +8,15 @@ def createjobs(min_map:str, max_map:str):
     #SBATCH --output=slurm/logs/output_MINMAP_MAXMAP.txt                # Standard output file
     #SBATCH --error=slurm/logs/error_MINMAP_MAXMAP.txt          	    # Standard error file
     #SBATCH --time=02:00:00                 		                    # Time limit (2 hours)
-    #SBATCH --partition=gruenau             		                    # Partition name
+    #SBATCH --partition=longrun             		                    # Partition name
     #SBATCH --nodes=1                       		                    # Number of nodes
-    #SBATCH --ntasks=1                      		                    # Number of tasks
-    #SBATCH --cpus-per-task=16              		                    # Number of CPU cores per task
+    #SBATCH --ntasks-per-node=1                                        # Number of processes per Node
+    #SBATCH --cpus-per-task=16                 		                    # Number of CPU cores per task
+    #SBATCH --ntasks-per-core=1                                         # Disable Hyperthreads
     #SBATCH --mem=128G                      		                    # Memory per node
+
+    export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK}
+    
 
     # Load your specific Python module if needed
     module load anaconda/3-2023.03
@@ -47,8 +51,8 @@ def submit_slurm_job(filepath_slurm_script):
         print(f"Error submitting SLURM job: {e}")
 
 if __name__ == '__main__':
-    min_map = 14
-    max_map = 21
+    min_map = 11
+    max_map = 12
     
     #The Whole 10 Reps for a Map take about 60 Minutes in Grünau1
     for i in range(min_map, max_map):
