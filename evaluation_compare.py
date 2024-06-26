@@ -10,6 +10,16 @@ import pandas as pd
 MAXIMUM_SPREAD_VALUE = 1.5
 plt.rcParams.update({'font.size': 16})
 
+palette = {
+    'URC'                       : 'tab:green',
+    'URC Percentage'            : 'tab:green',
+    'URC Cum. Percentage'       : 'tab:green',
+    'URC Mod'                   : 'tab:blue',
+    'URC Mod Percentage'        : 'tab:blue',
+    'URC Mod Cum. Percentage'   : 'tab:blue',
+    "Baseline"                  : "tab:red"
+}
+
 # Specify the paths to CSV files and the file containing expected values
 urcmod_fronts_dir = r'Applications/EvoChecker-master/data'
 urc_fronts_dir = r'/home/arturo/Dokumente/MikeCharlie/Results/Original/data'
@@ -53,6 +63,19 @@ def is_dominated(x, y, data):
             return True
     return False
 
+def z_score_normalize(column):
+    """Z-score Normalization (Standardization) of a dataframe's column, centers around 0 mean"""
+    mean = column.mean()
+    std_dev = column.std()
+    standardized_column = (column - mean) / std_dev
+    return standardized_column
+
+def min_max_normalize(data):
+    """This scales the data so its between 0 and 1"""
+    min_val = np.min(data)
+    max_val = np.max(data)
+    normalized_data = (data - min_val) / (max_val - min_val)
+    return normalized_data
 
 def filter_dominated_points(data):
     non_dominated_data = []
@@ -151,10 +174,10 @@ def perform_mann_whitney_u_test(data, alpha=0.05):
     return results
 
 def create_comparison_box_plots(data1:list[list], data2:list[list], selected_maps, ylabel, title):
-    # Extract gains for the selected maps
+    # Extract gains for the selected maps. In case it differs from all 90
     gains_selected_1 = [data1[i] for i in selected_maps]
     gains_selected_2 = [data2[i] for i in selected_maps]
-
+    
     # Flatten the data
     combined_data = [item for sublist in gains_selected_1 for item in sublist] + [item for sublist in gains_selected_2 for item in sublist]
     # Create labels for the data
@@ -163,16 +186,18 @@ def create_comparison_box_plots(data1:list[list], data2:list[list], selected_map
     map_indices = [i for i, sublist in enumerate(gains_selected_1) for _ in sublist] + [i for i, sublist in enumerate(gains_selected_2) for _ in sublist]
 
     # Create a DataFrame for seaborn
-    import pandas as pd
     df = pd.DataFrame({
         'Value': combined_data,
         'Label': labels,
         'Map': map_indices
     })
 
-    # Create a single plot for the selected gains
+    # Normalize data
+    df['z_score_normalized'] = z_score_normalize(df['Value'])
+
+    #COMPLETE ZSCORE
     plt.figure(figsize=(16, 8))
-    sns.boxplot(x='Map', y='Value', hue='Label', data=df, palette='Set2')
+    sns.boxplot(x='Map', y='z_score_normalized', hue='Label', data=df, palette=palette)
 
     # Add a dashed line at y=0
     plt.axhline(y=0, color='black', linestyle='--')
@@ -182,7 +207,7 @@ def create_comparison_box_plots(data1:list[list], data2:list[list], selected_map
     plt.ylabel(ylabel)
     plt.title(title)
     plt.legend(title='Data Source')
-    plt.savefig(f'plots/compare/boxplots/{ylabel}_{title[:1]}_{title[2:]}.pdf')
+    plt.savefig(f'plots/compare/boxplots/{ylabel}_{title[:1]}_{title[2:]}_zscore.pdf')
 
 def build_evaldata_baseline(acceptable_interval:[float, int], max_replications:int, maps:int, fronts_dir:str):
     """This takes the values out of data looking at each rep and map and calculates the spread and hypervolume against the baseline"""
@@ -348,9 +373,9 @@ def build_evaldata_compare(acceptable_interval:[float, int], max_replications:in
         compare2_hv.append(rep_hv)
 
     # Calculate differences for spread and hypervolume
-
+    # Spread Lower is Better. Negative Value is superior / Hypervolume higher is better. Positive value is superior
     spread_gain     = np.array(compare1_spread) -  np.array(compare2_spread)
-    hv_gain         = np.array(compare1_hv) - np.array(compare2_hv)
+    hv_gain         = np.array(compare1_hv)     - np.array(compare2_hv)
 
     #print("Finsh evaluation main")
 
