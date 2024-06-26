@@ -7,5 +7,7 @@ Applications/EvoChecker-master/.settings
 *.png
 *.out
 *.slurm
+*.tex
+*.xlsx
 .vscode/
 plots_orig/

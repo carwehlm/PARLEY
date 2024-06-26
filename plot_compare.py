@@ -155,15 +155,27 @@ def build_plot_compare(m, replication, output_filename=None):
 def plot_database(df:pd.DataFrame, output_filename:str, xlim:tuple[float,float], ylim:tuple[float,float]):
     """Function to plot database values graphically"""
 
-    plt.figure(figsize=(8, 8))
-    sns.scatterplot(data=df, x=columnNames[3], y=columnNames[4], style=columnNames[2], markers=markers, hue=columnNames[2], size=columnNames[5], palette=palette)
-    plt.xlabel('Probability of mission success')
-    plt.ylabel('Cost')
-    plt.title(output_filename)
-    plt.xlim(xlim)
-    plt.ylim(ylim)
-    plt.legend()
-    plt.grid(True)
+    # Create a 3x3 grid of subplots
+    fig, axes = plt.subplots(3, 3, figsize=(15, 15))
+    
+    for i, ax in enumerate(axes.flatten()):
+        # Generate scatter plot on each subplot
+        sns.scatterplot(ax=ax, data=df.iloc[i*30:(i+1)*30,:], x=columnNames[3], y=columnNames[4], 
+                        style=columnNames[0], hue=columnNames[2], s=150, palette=palette, legend=False)
+        ax.set_xlabel('Probability of mission success')
+        ax.set_ylabel('Cost')
+        ax.set_xlim(xlim)
+        ax.set_ylim(ylim)
+        ax.grid(True)
+
+        # Set individual titles for each subplot (optional)
+        ax.set_title(f'Subplot Model {f"{(i+1)*10} - {(i+1)*10+9}"}')
+
+    # Main title for the entire figure
+    fig.suptitle(output_filename, fontsize=20)
+
+    # Adjust layout to prevent overlap
+    plt.tight_layout(rect=[0, 0, 1, 0.95])
 
     # Save the plot as an image file
     plt.savefig(f'{folderpath_compare}/{output_filename}.pdf')
@@ -328,7 +340,7 @@ if __name__ == '__main__':
     ### --- ### --- ### --- Modeling Database--- ### --- ### --- ###
     master = build_database()
     df_highsuccess, df_lowcost, df_bestratio = filter_database(master)
-    plot_database(df_highsuccess, "High Success", (1, 0.7), (40, 90))
+    plot_database(df_highsuccess, "High Success", (1, 0.7), (40, 120))
     plot_database(df_lowcost, "Low Cost",(1,0.5), (10,40))
     plot_database(df_bestratio, "Best Ratio",(1,0.5), (10,40))
     boxplot_database(df_highsuccess, "High Success Boxplot", columnNames[3])
