@@ -309,9 +309,9 @@ def filter_database(master:pd.DataFrame, excelExport = True):
             master_bestratio.to_excel(writer, sheet_name="bestratio")
     
     #Export to Latex
-    desc_table_highsucess.to_latex(f"{folderpath_compare}/t_highsuccess.tex", float_format=r"%.4f", escape=True, caption="High Success Comparison Summary")
-    desc_table_lowcost.to_latex(f"{folderpath_compare}/t_lowcost.tex", float_format=r"%.2f", escape=True, caption="Low Cost Comparison Summary")
-    desc_table_bestratio.to_latex(f"{folderpath_compare}/t_bestratio.tex", float_format=r"%.4f", escape=True, caption="Best Ratio Comparison Summary")
+    desc_table_highsucess.to_latex(f"{folderpath_compare}/t_highsuccess.tex", float_format=r"%.4f", escape=True)
+    desc_table_lowcost.to_latex(f"{folderpath_compare}/t_lowcost.tex", float_format=r"%.2f", escape=True)
+    desc_table_bestratio.to_latex(f"{folderpath_compare}/t_bestratio.tex", float_format=r"%.4f", escape=True)
 
     return master_highsuccess, master_lowcost, master_bestratio
 
@@ -340,8 +340,8 @@ if __name__ == '__main__':
 
 
     ### --- ### --- ### --- Single Thread --- ### --- ### --- ###
-    for model, rep in tasks:
-        process_lineplots((model, rep))
+    # for model, rep in tasks:
+    #     process_lineplots((model, rep))
 
     ### --- ### --- ### --- Multithread --- ### --- ### --- ###
     # with concurrent.futures.ProcessPoolExecutor() as executor:    
