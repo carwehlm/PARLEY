@@ -384,14 +384,14 @@ def build_evaldata_compare(acceptable_interval:[float, int], max_replications:in
 def parse_evaldata(results, acceptable_interval, spread_gain, hv_gain):
     """Takes the results of the spread and hypervolume  gain and performs a Mann Whitney U Test and returns the results sorted as\n
     higher, lower or no statistical difference in a dictionary"""
-    sp_results = perform_mann_whitney_u_test(spread_gain)
     hv_results = perform_mann_whitney_u_test(hv_gain)
+    sp_results = perform_mann_whitney_u_test(spread_gain)
 
-    print(sp_results)
     print(hv_results)
-
-    results[acceptable_interval[0]][label_sp][acceptable_interval[1]] = f"{sp_results[label_l]}/{sp_results[label_h]}/{sp_results[label_n]}"
-    results[acceptable_interval[0]][label_hv][acceptable_interval[1]] = f"{hv_results[label_h]}/{hv_results[label_l]}/{hv_results[label_n]}"
+    print(sp_results)
+    
+    results[acceptable_interval[0]][label_hv][acceptable_interval[1]] = f"{hv_results[label_h]:02d}/{hv_results[label_l]:02d}/{hv_results[label_n]:02d}"
+    results[acceptable_interval[0]][label_sp][acceptable_interval[1]] = f"{sp_results[label_l]:02d}/{sp_results[label_h]:02d}/{sp_results[label_n]:02d}"
     
     return(results)
 
@@ -400,7 +400,7 @@ def export_evaldata(results:dict, filename:str, caption="Hypervolume and Spread"
 
     flat_data = {(success, gains): results[success][gains] for success in results.keys() for gains in results[success].keys() }
     df = pd.DataFrame.from_dict(flat_data, orient='index')
-    df.to_latex(f"{folderpath_compare}/{filename}.tex", float_format=r"%.2f", escape=True, caption=caption)
+    df.to_latex(f"{folderpath_compare}/{filename}.tex", float_format=r"%.2f", escape=True)
 
 if __name__ == '__main__':
     print("Runtime Start")
