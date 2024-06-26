@@ -16,7 +16,7 @@ markers = {"URC": "^", "URC Mod": "o", "Baseline": "X",
            "URC Percentage": "^", "URC Mod Percentage": "o", "Baseline Percentage": "X",
            "URC Cum. Percentage": "^", "URC Mod Cum. Percentage": "o", "Baseline Cum. Percentage": "X"}
 boundary_x = (1, 0.5)
-boundary_y = (0, 70)
+boundary_y = (0, 100)
 minmax_model = (10,100)
 minmax_repl = (0,10) 
 
@@ -152,16 +152,22 @@ def build_plot_compare(m, replication, output_filename=None):
     plt.savefig(f'{folderpath_compare}/fronts/{output_filename}.pdf')
     plt.close()
 
-def plot_database(df:pd.DataFrame, output_filename:str, xlim:tuple[float,float], ylim:tuple[float,float]):
+def plot_database(df:pd.DataFrame, output_filename:str, xlim:tuple[float,float], ylim:tuple[float,float], size_asratio=False):
     """Function to plot database values graphically"""
 
     # Create a 3x3 grid of subplots
     fig, axes = plt.subplots(3, 3, figsize=(15, 15))
-    
+
     for i, ax in enumerate(axes.flatten()):
-        # Generate scatter plot on each subplot
-        sns.scatterplot(ax=ax, data=df.iloc[i*30:(i+1)*30,:], x=columnNames[3], y=columnNames[4], 
-                        style=columnNames[0], hue=columnNames[2], s=150, palette=palette, legend=False)
+        if size_asratio == False:
+            # Generate scatter plot on each subplot with fixed size marker
+            sns.scatterplot(ax=ax, data=df.iloc[i*30:(i+1)*30,:], x=columnNames[3], y=columnNames[4], 
+                            style=columnNames[0], hue=columnNames[2], s=150, palette=palette, legend=False)
+        else:
+            # Generate scatter plot on each subplot with best ratio size marker
+            sns.scatterplot(ax=ax, data=df.iloc[i*30:(i+1)*30,:], x=columnNames[3], y=columnNames[4], 
+                            style=columnNames[0], hue=columnNames[2], palette=palette, size=columnNames[5], legend=False)
+    
         ax.set_xlabel('Probability of mission success')
         ax.set_ylabel('Cost')
         ax.set_xlim(xlim)
@@ -342,7 +348,7 @@ if __name__ == '__main__':
     df_highsuccess, df_lowcost, df_bestratio = filter_database(master)
     plot_database(df_highsuccess, "High Success", (1, 0.7), (40, 120))
     plot_database(df_lowcost, "Low Cost",(1,0.5), (10,40))
-    plot_database(df_bestratio, "Best Ratio",(1,0.5), (10,40))
+    plot_database(df_bestratio, "Best Ratio",(1,0.5), (10,40), True)
     boxplot_database(df_highsuccess, "High Success Boxplot", columnNames[3])
     boxplot_database(df_lowcost, "Low Cost Boxplot", columnNames[4])
     boxplot_database(df_bestratio, "Best Ratio Boxplot", columnNames[5])
@@ -352,8 +358,8 @@ if __name__ == '__main__':
 
 
     ### --- ### --- ### --- Single Thread --- ### --- ### --- ###
-    # for model, rep in tasks:
-    #     process_lineplots((model, rep))
+    for model, rep in tasks:
+        process_lineplots((model, rep))
 
     ### --- ### --- ### --- Multithread --- ### --- ### --- ###
     # with concurrent.futures.ProcessPoolExecutor() as executor:    
