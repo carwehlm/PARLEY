@@ -77,6 +77,16 @@ def min_max_normalize(data):
     normalized_data = (data - min_val) / (max_val - min_val)
     return normalized_data
 
+def remove_outliers(df:pd.DataFrame, column:str):
+    """Remove outliers based on IQR method"""
+    Q1 = df[column].quantile(0.25)
+    Q3 = df[column].quantile(0.75)
+    IQR = Q3 - Q1
+    lower_bound = Q1 - 1.5 * IQR
+    upper_bound = Q3 + 1.5 * IQR
+    
+    return df[(df[column] >= lower_bound) & (df[column] <= upper_bound)]
+    
 def filter_dominated_points(data):
     non_dominated_data = []
     for x, y in data:
@@ -207,7 +217,43 @@ def create_comparison_box_plots(data1:list[list], data2:list[list], selected_map
     plt.ylabel(ylabel)
     plt.title(title)
     plt.legend(title='Data Source')
-    plt.savefig(f'plots/compare/boxplots/{ylabel}_{title[:1]}_{title[2:]}_zscore.pdf')
+    plt.savefig(f'plots/compare/boxplots/{ylabel}_{title[:1]}_{title[2:]}.pdf')
+
+def create_box_plots(data1:list[list], selected_maps, ylabel, title, label_pos, label_neg):
+    # Extract gains for the selected maps. In case it differs from all 90
+    gains_selected_1 = [data1[i] for i in selected_maps]
+    data = [item for sublist in gains_selected_1 for item in sublist] 
+
+    # Create corresponding map indices
+    map_indices = [i for i, sublist in enumerate(gains_selected_1) for _ in sublist]
+    
+    # Create a DataFrame for seaborn
+    df = pd.DataFrame({
+        'Value': data,
+        'Map': map_indices
+    })
+
+    #Set Labels for winner on each Rep
+    df["Label"] = [label_pos if x > 0 else label_neg for x in df['Value']]
+
+    # Normalize data
+    #df['z_score_normalized'] = z_score_normalize(df['Value'])
+
+    df = remove_outliers(df, "Value")
+
+    #COMPLETE ZSCORE
+    plt.figure(figsize=(16, 8))
+    sns.boxplot(x='Map', y='Value', data=df)
+
+    # Add a dashed line at y=0
+    plt.axhline(y=0, color='black', linestyle='--')
+    plt.xticks(np.arange(0, len(selected_maps), 5))
+
+    plt.xlabel('Map')
+    plt.ylabel(ylabel)
+    plt.title(title)
+    #plt.legend(title='Data Source')
+    plt.savefig(f'plots/compare/boxplots/{ylabel}_{title[:1]}_{title[2:]}.pdf')
 
 def build_evaldata_baseline(acceptable_interval:[float, int], max_replications:int, maps:int, fronts_dir:str):
     """This takes the values out of data looking at each rep and map and calculates the spread and hypervolume against the baseline"""
@@ -427,12 +473,21 @@ if __name__ == '__main__':
         export_evaldata(results_urc, "urc_spread_hypervolume", "Hypervolume and Spread URC to Baseline")
         export_evaldata(results_compare, "compare_spread_hypervolume", "Hypervolume and Spread URC Mod to URC")
         
-        #Create box plots for spread gains URC Mod and URC to Baseline
-        create_comparison_box_plots(urcmod_spread_gain, urc_spread_gain, selected_maps, 'Spread-Gains',
-                                    f'{acceptable_interval[0]}-{acceptable_interval[1]}')
-
         #Create box plots for hypervolume gains URC Mod and URC to Baseline
         create_comparison_box_plots(urcmod_hv_gain, urc_hv_gain, selected_maps, 'Hypervolume-Gains',
                                     f'{acceptable_interval[0]}-{acceptable_interval[1]}')
+
+        #Create box plots for spread gains URC Mod and URC to Baseline
+        create_comparison_box_plots(urcmod_spread_gain, urc_spread_gain, selected_maps, 'Spread-Gains',
+                                    f'{acceptable_interval[0]}-{acceptable_interval[1]}')
+        
+        #Create box plots for differences URC Mod to URC
+        create_box_plots(compare_hv_gain, selected_maps, 'Hypervolume-Gains URC Mod to URC',
+                    f'{acceptable_interval[0]}-{acceptable_interval[1]}',
+                    label_pos="URC Mod", label_neg="URC")
+        
+        create_box_plots(compare_spread_gain, selected_maps, 'Spread-Gains URC Mod to URC',
+                    f'{acceptable_interval[0]}-{acceptable_interval[1]}',
+                    label_pos="URC", label_neg="URC Mod")
     
     print("Runtime End")
