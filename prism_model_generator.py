@@ -93,8 +93,7 @@ def robot():
                 '    p: (x\'=max(x-1, 0)) & (move_ready\'=0); \n')
         f.write('\n')
         f.write('  [check] (move_ready=0) & hasCrashed -> (crashed\'=1) & (move_ready\'=1); \n')
-        f.write('  [check] (move_ready=0) & !hasCrashed -> (crashed\'=0) & (move_ready\'=1); \n')
-        f.write('  [stucked] (crashed=1) -> true;\n')
+        f.write('  [check] (move_ready=0) & !hasCrashed -> (move_ready\'=1); \n')
         f.write('endmodule\n\n')
 
 
@@ -106,7 +105,7 @@ def adaptation_mape_controller(d):
                 direction = int(d[y][x])
                 if direction < 4:
                     f.write('  [{0}] '.format(directions[direction]))
-                    f.write('(xhat={0}) & (yhat={1}) & (crashed=0) -> true;\n'.format(str(x), str(y)))
+                    f.write('(xhat={0}) & (yhat={1}) -> true;\n'.format(str(x), str(y)))
         f.write('endmodule\n\n')
 
 
@@ -115,14 +114,14 @@ def knowledge():
         f.write('module Knowledge\n')
         f.write('  xhat : [0..N] init xstart;\n')
         f.write('  yhat : [0..N] init ystart;\n')
-        f.write('  step : [0..c] init 0;\n\n')
+        f.write('  step : [1..20] init 1;\n\n')
         f.write('  ready : [0..1] init 1;\n')
 
         for d, effect in zip(directions, directions_effects):
             f.write('  [{0}] ready=1 -> {1} & (ready\'=0);\n'.format(d, effect))
 
-        f.write('  [update] step>=c & ready=0 -> (xhat\'=x) & (yhat\'=y) & (step\'=0) & (ready\'=1);\n')
-        f.write('  [skip_update] step<c & ready=0 -> (step\'=step+1) & (ready\'=1);\n')
+        f.write('  [update] step>=c & ready=0 -> (xhat\'=x) & (yhat\'=y) & (step\'=1) & (ready\'=1);\n')
+        f.write('  [skip_update] step<c & ready=0 -> (ready\'=1) & (step\'=step+1);\n')
         f.write('endmodule\n\n')
 
 

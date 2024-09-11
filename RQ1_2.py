@@ -2,11 +2,11 @@ import os
 
 import create_maps
 import prism_model_generator
-import umc_synthesis
 import prism_caller
 import run_evochecker
 import evaluation
 import plot_fronts
+import urc_synthesis
 
 max_replications = 10
 
@@ -20,8 +20,7 @@ def models(i):
     infile = f'Applications/EvoChecker-master/models/model_{i}.prism'
     outfile = f'Applications/EvoChecker-master/models/model_{i}_umc.prism'
     # TODO umc_synthesis.manipulate_prism_model is currently broken
-    umc_synthesis.manipulate_prism_model(infile, outfile, before_actions=['east', 'west', 'north', 'south'],
-                                         after_actions=['check'])
+    urc_synthesis.manipulate_prism_model(infile, outfile, baseline=True)
 
 
 def baseline(i):
@@ -49,13 +48,13 @@ def fronts(i):
 def main():
     # maps()
     for i in range(10, 11):
-        # models(i)
-        # baseline(i)
+        models(i)
+        #baseline(i)
         # evo_checker(i)
         # fronts(i)
         print(f'Finished map {i}')
     # evaluation
-    evaluation.main()
+    #evaluation.main()
 
 
 if __name__ == '__main__':
