@@ -44,7 +44,6 @@ def build_map(filename):
     #    map_data.append([i[j] for i in n])
 
 
-
 def preambel():
     with open(prism_file, 'a') as f:
         f.write('dtmc\n')
@@ -156,7 +155,7 @@ def read_params_from_file():
 # i depicts which map should be used
 def generate_model(i):
     global prism_file
-    prism_file = "models/model_" + str(i) + ".prism"
+    prism_file = "Applications/EvoChecker-master/models/model_" + str(i) + ".prism"
     read_params_from_file()
     build_map("maps/map_" + str(i) + ".csv")
     target_pos = (targetX, targetY)
@@ -172,5 +171,3 @@ def generate_model(i):
     rewards()
 
     print("finished map " + str(i))
-
-

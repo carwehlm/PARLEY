@@ -1,6 +1,5 @@
 //Objective, max
-P=? [ F x=targetX & y=targetY ]
+P=?[F(x=9 & y=9 & crashed=0)]
 
 //Objective, min
-R{"cost"}=? [ C <=200 ]
-
+R{"cost"}=?[C<=100]

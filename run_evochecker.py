@@ -3,13 +3,14 @@ from multiprocessing import Pool, cpu_count
 
 
 def run_task(args):
-    os.system('export LD_LIBRARY_PATH=libs/runtime')
+    os.chdir('Applications/EvoChecker-master')
+    os.environ['LD_LIBRARY_PATH'] = "libs/runtime"
     i, rep = args
     path = "./{0}_{1}.properties".format(str(i), str(rep))
     open(path, "w").close()
     with open(path, 'a') as f:
         f.write("PROBLEM = ROBOT{0}_REP{1}\n".format(str(i), str(rep)))
-        f.write("       MODEL_TEMPLATE_FILE = models/model_{0}.prism\n".format(str(i)))
+        f.write("       MODEL_TEMPLATE_FILE = models/model_{0}_umc.prism\n".format(str(i)))
         f.write("       PROPERTIES_FILE = robot.pctl\n")
         f.write("       ALGORITHM = NSGAII\n")
         f.write("       POPULATION_SIZE = 100\n")
@@ -18,8 +19,9 @@ def run_task(args):
         f.write("       PLOT_PARETO_FRONT = false\n")
         f.write("       VERBOSE = true\n")
         f.write("       INIT_PORT = 55{0}\n".format(str(i)))
+    # Note: INIT_PORT doesn't have an effect https://github.com/gerasimou/EvoChecker/issues/11
 
-    os.system('java -jar ./Applications/EvoChecker-master/target/EvoChecker-1.1.0.jar ' + path)
+    os.system('java -jar ./target/EvoChecker-1.1.0.jar ' + path)
 
 
 def run(map_, replications):
@@ -34,4 +36,3 @@ def run(map_, replications):
 
     with Pool(num_processes) as pool:
         pool.map(run_task, tasks)
-
