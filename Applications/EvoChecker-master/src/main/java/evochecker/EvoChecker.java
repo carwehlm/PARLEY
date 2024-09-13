@@ -88,7 +88,8 @@ public class EvoChecker {
 	/** Pareto set filename*/
 	private String paretoSetFile;
 
-
+	/** Seed solutions to load*/
+	private String initialSolutions;
 	
 	public EvoChecker() {
 		

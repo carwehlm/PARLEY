@@ -57,6 +57,12 @@ public class Constants {
   /** Keyword for population size*/
   public static final String POPULATION_SIZE_KEYWORD 	= "POPULATION_SIZE";
 
+  /** Keyword for loading seed*/
+  public static final String LOAD_SEED_KEYWORD  = "LOAD_SEED";
+  
+  /** Keyword for population values*/
+  public static final String SEED_FILE_KEYWORD 	= "SEED_FILE";
+
   /** Keyword for processors*/
   public static final String PROCESSORS_KEYWORD 		= "PROCESSORS";
 

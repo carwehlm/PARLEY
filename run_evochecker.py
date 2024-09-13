@@ -18,6 +18,8 @@ def run_task(args):
         f.write("       PROCESSORS = 1\n")
         f.write("       PLOT_PARETO_FRONT = false\n")
         f.write("       VERBOSE = true\n")
+        f.write("       LOAD_SEED = true\n")
+        f.write("       SEED_FILE = data/ROBOT10/Front\n")
         f.write("       INIT_PORT = 55{0}\n".format(str(i)))
     # Note: INIT_PORT doesn't have an effect https://github.com/gerasimou/EvoChecker/issues/11
 
