@@ -1,3 +1,4 @@
+import json
 import os
 
 import create_maps
@@ -8,7 +9,7 @@ import evaluation
 import plot_fronts
 import urc_synthesis
 
-max_replications = 10
+max_replications = 1
 
 
 def maps():
@@ -19,8 +20,9 @@ def models(i):
     prism_model_generator.generate_model(i)
     infile = f'Applications/EvoChecker-master/models/model_{i}.prism'
     outfile = f'Applications/EvoChecker-master/models/model_{i}_umc.prism'
-    # TODO umc_synthesis.manipulate_prism_model is currently broken
-    urc_synthesis.manipulate_prism_model(infile, outfile, baseline=True)
+    os.makedirs(f'Applications/EvoChecker-master/data/ROBOT{i}', exist_ok=True)
+    popfile = f'Applications/EvoChecker-master/data/ROBOT{i}/Front'
+    urc_synthesis.manipulate_prism_model(infile, outfile, baseline=False, initial_pop_file=popfile)
 
 
 def baseline(i):
@@ -45,12 +47,26 @@ def fronts(i):
         plot_fronts.plot_pareto_front(i, period)
 
 
+def __modify_properties():
+    try:
+        with open('input.json', 'r') as json_file:
+            data = json.load(json_file)
+    except FileNotFoundError:
+        data = {"startX": 0, "startY": 0, "targetX": 9, "targetY": 9, "p": 0.01, "updates": [5], "map_file": "map.csv"}
+    # Modify targetX and targetY to be equal to i
+    data["targetX"] = 9
+    data["targetY"] = 9
+    # Write the modified data back to the JSON file
+    with open('input.json', 'w') as json_file:
+        json.dump(data, json_file, indent=4)
+
 def main():
+    __modify_properties()
     # maps()
     for i in range(10, 11):
-        models(i)
+        # models(i)
         #baseline(i)
-        # evo_checker(i)
+        evo_checker(i)
         # fronts(i)
         print(f'Finished map {i}')
     # evaluation

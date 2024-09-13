@@ -7,6 +7,7 @@ size = 10
 start = (size - 1, 0)
 end = (0, size - 1)
 csv_file_path = "maps/map_"
+sizes = [5, 10, 15, 20]
 
 
 def generate_one_map():
@@ -99,8 +100,7 @@ def create_90_maps():
 
 # method to create additional maps to investigate scalability
 # creates maps of size 5x5, 15x15, 20x20
-def create_3_maps():
-    sizes = [5, 15, 20]
+def create_4_maps():
     for i in range(len(sizes)):
         global size, start, end
         size = sizes[i]

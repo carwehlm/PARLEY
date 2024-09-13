@@ -3,7 +3,7 @@ import sys
 import subprocess
 
 prism_bin = 'Applications/prism/bin/prism' if sys.platform == "darwin" else 'prism'  # use local prism if not OS X
-properties = ('\'P=?[F(x=9 & y=9 & crashed=0)]\'', '\'R{"cost"}=?[C<=100]\'')
+properties = ('\'P=?[F(x=xtarget & y=ytarget & crashed=0)]\'', '\'R{"cost"}=?[C<=200]\'')
 command = f'{prism_bin} -maxiters 50000 out.prism -pf '
 
 

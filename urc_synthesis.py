@@ -4,7 +4,7 @@ import shutil
 
 
 def manipulate_prism_model(input_path, output_path, possible_decisions=[1, 10], decision_variables=[],
-                           before_actions=['east', 'west', 'north', 'south'], after_actions=['update', 'skip_update'], module_name='Knowledge', baseline=False):
+                           before_actions=['east', 'west', 'north', 'south'], after_actions=['update', 'skip_update'], module_name='Knowledge', baseline=False, initial_pop_file='Set'):
     if os.path.abspath(input_path) == os.path.abspath(output_path):
         raise ValueError("Input and output files cannot be the same.")
 
@@ -14,7 +14,7 @@ def manipulate_prism_model(input_path, output_path, possible_decisions=[1, 10], 
 
     remove_counter_from_module(output_path)
 
-    add_controller(output_path, estimates, variables, possible_decisions, baseline=baseline)
+    add_controller(output_path, estimates, variables, possible_decisions, baseline, initial_pop_file)
 
     add_turn(output_path, before_actions, after_actions)
 
@@ -74,7 +74,7 @@ def remove_counter_from_module(output_path):
         file.writelines(new_lines)
 
 
-def add_controller(file_path, estimates, variables, possible_decisions, baseline):
+def add_controller(file_path, estimates, variables, possible_decisions, baseline, initial_pop_file):
     combinations = generate_combinations_list(variables)
     __add_controller_prefix(file_path, possible_decisions, combinations, variables, baseline)
     with open(file_path, 'a') as file:
@@ -92,6 +92,8 @@ def add_controller(file_path, estimates, variables, possible_decisions, baseline
             new_line += ');\n'
             file.write(new_line)
         file.write('endmodule\n')
+
+    __generate_initial_population(initial_pop_file, possible_decisions, combinations)
 
 
 def __add_controller_prefix(file_path, possible_decisions, combinations, variables, baseline):
@@ -146,3 +148,13 @@ def generate_combinations_list(variables):
 
     generate_combinations_recursive([], variables)
     return result
+
+
+def __generate_initial_population(file_path, possible_decisions, combinations):
+    # write decision variables
+    with open(file_path, 'w') as file:
+        for c in range(possible_decisions[0], possible_decisions[1]):
+            new_line = ''
+            for _ in range(len(combinations)):
+                new_line += f'{c} '
+            file.write(new_line + '\n')
