@@ -82,7 +82,7 @@ def add_controller(file_path, estimates, variables, possible_decisions, baseline
 
         for combination in combinations:
             # combination describes a tuple of values, e.g., for ^x and ^y, such as (0, 0)
-            new_line = '  [URC] 1=1'
+            new_line = '  [URC] one=1'
             for c, estimate in zip(combination, estimates):
                 # estimate describes the variable's name
                 new_line += f' & {estimate}={c}'
@@ -111,6 +111,7 @@ def __add_controller_prefix(file_path, possible_decisions, combinations, variabl
             else:
                 new_line += f' [{possible_decisions[0]}..{possible_decisions[1]}];'
             file.write('\n' + new_line)
+        file.write('const int one=1;\n')
         file.write('\nmodule URC\n')
 
 
