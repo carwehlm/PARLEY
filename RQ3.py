@@ -9,7 +9,7 @@ import json
 
 import urc_synthesis
 
-reps = 1
+reps = 10
 
 def main():
     # Initialize result lists for times, states, and transitions

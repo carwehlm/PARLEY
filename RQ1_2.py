@@ -2,14 +2,14 @@ import json
 import os
 
 import create_maps
+import evaluation
 import prism_model_generator
 import prism_caller
 import run_evochecker
-import evaluation
 import plot_fronts
 import urc_synthesis
 
-max_replications = 1
+max_replications = 10
 
 
 def maps():
@@ -27,7 +27,9 @@ def models(i):
 
 def baseline(i):
     baseline_file = f'Applications/EvoChecker-master/data/ROBOT{i}_BASELINE/Front'
+    # baseline_file = f'Applications/EvoChecker-master/data/TAS/baseline/Front'
     infile = f'Applications/EvoChecker-master/models/model_{i}.prism'
+    # infile = f'Applications/EvoChecker-master/models/TAS/TAS.prism'
     os.makedirs(f'Applications/EvoChecker-master/data/ROBOT{i}_BASELINE', exist_ok=True)
     with open(baseline_file, 'w') as b_file:
         for period in range(1, 11):
@@ -62,15 +64,15 @@ def __modify_properties():
 
 def main():
     __modify_properties()
-    # maps()
-    for i in range(10, 11):
-        # models(i)
-        #baseline(i)
+    maps()
+    for i in range(10, 12):
+        models(i)
+        baseline(i)
         evo_checker(i)
-        # fronts(i)
+        fronts(i)
         print(f'Finished map {i}')
     # evaluation
-    #evaluation.main()
+    evaluation.main()
 
 
 if __name__ == '__main__':
