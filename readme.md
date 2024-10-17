@@ -1,8 +1,8 @@
-# PARLEY
+# PARLEY+
 
 **Ada<ins>p</ins>tive Uncert<ins>a</ins>inty <ins>R</ins>eduction in Se<ins>l</ins>f Adaptiv<ins>e</ins> S<ins>y</ins>stems**
 
-Check out more about PARLEY in our SEAMS 2024 paper, publicly available on Arxiv.org here: https://arxiv.org/pdf/2401.17187.pdf. 
+Check out more about PARLEY in our SEAMS 2024 paper, publicly available on Arxiv.org here: [ACM DL](https://dl.acm.org/doi/pdf/10.1145/3643915.3644095). 
 
 To replicate our experiments, you need to install EvoChecker using maven.
 To this end, navigate to `./Applications/EvoChecker-master` and run `mvn install` \
@@ -17,7 +17,7 @@ java -jar ./Applications/EvoChecker-master/target/EvoChecker-1.1.0.jar
 ```
 
 If you are not using macOS you need to download the correct PRISM version for your machine from
-https://www.prismmodelchecker.org/download.php ans install it.
+https://www.prismmodelchecker.org/download.php and install it.
 
 Check if at least one of the two commands work:
 ```
@@ -71,7 +71,7 @@ python3 RQ3.py
 
 ---
 
-Alongside, we provide a PRISM model for the web-server in `./models/servers/`
+Alongside, we provide a PRISM model for the web-server in `./models/servers/` and a model for TAS in `./models/TAS/`
 
 Finally, we provide the code to replicate the turtlebot application in the `./turtlebot` directory alongside a dedicated README file.
 
