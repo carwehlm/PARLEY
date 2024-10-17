@@ -2,7 +2,7 @@
 
 **Ada<ins>p</ins>tive Uncert<ins>a</ins>inty <ins>R</ins>eduction in Se<ins>l</ins>f Adaptiv<ins>e</ins> S<ins>y</ins>stems**
 
-Check out more about PARLEY in our SEAMS 2024 paper, publicly available on Arxiv.org here: [ACM DL](https://dl.acm.org/doi/pdf/10.1145/3643915.3644095). 
+Check out more about PARLEY in our SEAMS 2024 paper, publicly available online here: [ACM DL](https://dl.acm.org/doi/pdf/10.1145/3643915.3644095). 
 
 To replicate our experiments, you need to install EvoChecker using maven.
 To this end, navigate to `./Applications/EvoChecker-master` and run `mvn install` \
