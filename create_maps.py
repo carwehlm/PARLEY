@@ -19,9 +19,9 @@ def generate_one_map():
             if r < 0:
                 r *= -1
             r *= 10
-            if j == 0 | j == 9:
+            if j == 0 | j == size-1:
                 r = 0
-            if i == 0 | j == 9:
+            if i == 0 | j == size-1:
                 r = 0
             l.append(r)
         map_data.append(l)
