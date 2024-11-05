@@ -7,7 +7,7 @@ const int xtarget = 4;
 const int ytarget = 4;
 const double p = 0.01;
  
-formula hasCrashed = (1=0) | (x=0 & y=1) | (x=0 & y=2) | (x=1 & y=1) | (x=1 & y=4) | (x=3 & y=1) | (x=4 & y=1) ;
+formula hasCrashed = (1=0) | (x=2 & y=1) | (x=2 & y=2) | (x=2 & y=4) | (x=3 & y=2) | (x=3 & y=3) ;
 
 module Robot 
   x : [0..N] init xstart;
@@ -42,21 +42,22 @@ endmodule
 
 module Adaptation_MAPE_controller
   [east] (xhat=0) & (yhat=0) -> true;
-  [east] (xhat=0) & (yhat=3) -> true;
+  [south] (xhat=0) & (yhat=1) -> true;
+  [south] (xhat=0) & (yhat=2) -> true;
+  [south] (xhat=0) & (yhat=3) -> true;
   [south] (xhat=0) & (yhat=4) -> true;
   [east] (xhat=1) & (yhat=0) -> true;
-  [east] (xhat=1) & (yhat=2) -> true;
-  [east] (xhat=1) & (yhat=3) -> true;
-  [north] (xhat=2) & (yhat=0) -> true;
-  [north] (xhat=2) & (yhat=1) -> true;
-  [north] (xhat=2) & (yhat=2) -> true;
-  [east] (xhat=2) & (yhat=3) -> true;
-  [east] (xhat=2) & (yhat=4) -> true;
-  [west] (xhat=3) & (yhat=0) -> true;
-  [north] (xhat=3) & (yhat=2) -> true;
-  [north] (xhat=3) & (yhat=3) -> true;
+  [south] (xhat=1) & (yhat=1) -> true;
+  [west] (xhat=1) & (yhat=2) -> true;
+  [west] (xhat=1) & (yhat=3) -> true;
+  [west] (xhat=1) & (yhat=4) -> true;
+  [east] (xhat=2) & (yhat=0) -> true;
+  [west] (xhat=2) & (yhat=3) -> true;
+  [east] (xhat=3) & (yhat=0) -> true;
+  [east] (xhat=3) & (yhat=1) -> true;
   [east] (xhat=3) & (yhat=4) -> true;
-  [west] (xhat=4) & (yhat=0) -> true;
+  [north] (xhat=4) & (yhat=0) -> true;
+  [north] (xhat=4) & (yhat=1) -> true;
   [north] (xhat=4) & (yhat=2) -> true;
   [north] (xhat=4) & (yhat=3) -> true;
 endmodule
