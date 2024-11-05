@@ -47,6 +47,10 @@ def main():
     print('\nStates (mean, standard deviation)')
     for i, stats in enumerate(stats_states):
         print(f'{stats} for size {create_maps.sizes[i]}')
+    for i in range(4):
+        print(f'For size {(i+1)*5}:')
+        print(f'Max number of states: {max(result_states[i])}')
+        print(f'Min number of states: {min(result_states[i])}')
 
     print('\nTransitions (mean, standard deviation)')
     for i, stats in enumerate(stats_transitions):
