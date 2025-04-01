@@ -483,6 +483,25 @@ def main():
             create_selected_box_plots(hv_diff, ylabel='Hypervolume-Gains', title=f'{acc_int}-{acceptable_interval[1]}-{approach1}-{approach2}')
             spread_diff = __get_diffs(pdi[approach2], pdi[approach1])
             create_selected_box_plots(spread_diff, ylabel='PDI-Gains', title=f'{acc_int}-{acceptable_interval[1]}-{approach1}-{approach2}')
+
+        # Calculate relative gains after all data is accumulated
+        relative_gains_hv = {approach: [] for approach in ['PARLEY', 'PARLEY+']}
+        relative_gains_pdi = {approach: [] for approach in ['PARLEY', 'PARLEY+']}
+
+        for approach in ['PARLEY', 'PARLEY+']:
+            for hv_baseline, hv_approach in zip(hv['Baseline'], hv[approach]):
+                gains_hv = [(a - b) / b * 100 if b != 0 else 100 for a, b in zip(hv_approach, hv_baseline)]
+                relative_gains_hv[approach].extend(gains_hv)
+
+            for pdi_baseline, pdi_approach in zip(pdi['Baseline'], pdi[approach]):
+                gains_pdi = [-(a - b) / b * 100 if b != 0 else -100 for a, b in zip(pdi_approach, pdi_baseline)]
+                relative_gains_pdi[approach].extend(gains_pdi)
+
+        print(f'Relative HV Gain for PARLEY: {np.mean(relative_gains_hv["PARLEY"]):.2f}%')
+        print(f'Relative HV Gain for PARLEY+: {np.mean(relative_gains_hv["PARLEY+"]):.2f}%')
+        print(f'Relative PDI Gain for PARLEY: {np.mean(relative_gains_pdi["PARLEY"]):.2f}%')
+        print(f'Relative PDI Gain for PARLEY+: {np.mean(relative_gains_pdi["PARLEY+"]):.2f}%')
+
     print_comparison_results(hv_count, "HV")
     print_comparison_results(spread_count, "PDI")
 
