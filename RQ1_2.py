@@ -65,7 +65,7 @@ def __modify_properties():
 def main():
     __modify_properties()
     maps()
-    for i in range(10, 12):
+    for i in range(10, 100):
         models(i)
         baseline(i)
         evo_checker(i)

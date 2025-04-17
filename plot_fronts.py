@@ -64,7 +64,7 @@ def plot_pareto_front(m=10, replication=0, header=True):
 
 
 def plot_pareto_front_for_robot(m=10, replication=2, ref_point=(0.7, 80), header=True):
-    plt.rcParams.update({'font.size': 16})
+    plt.rcParams.update({'font.size': 15})
 
     file_path = f'Applications/EvoChecker-master/data/ROBOT{m}_REP{replication}_PLUS/NSGAII/'
     x_values_pp, y_values_pp = __get_data(file_path, header)
@@ -77,7 +77,7 @@ def plot_pareto_front_for_robot(m=10, replication=2, ref_point=(0.7, 80), header
     x_values_b = x_values_b[:10]
     y_values_b = y_values_b[:10]
 
-    plt.figure(figsize=(8, 6))
+    plt.figure(figsize=(10, 6))
 
     # Add red crosses for the baseline
     plt.scatter(x_values_b, y_values_b, color='red', marker='x', label='Baseline')
@@ -87,8 +87,8 @@ def plot_pareto_front_for_robot(m=10, replication=2, ref_point=(0.7, 80), header
     plt.scatter(x_values_pp, y_values_pp, color='blue', marker='+', label='PARLEY+')
 
     # Plot dashed lines at the ref_point (x=probability, y=cost)
-    plt.axvline(ref_point[0], color='gray', linestyle='--', label='Minimum Probability')
-    plt.axhline(ref_point[1], color='gray', linestyle='--', label='Maximum Available Cost')
+    plt.axvline(ref_point[0], color='gray', linestyle='--', label='Minimum Allowed Success Probability')
+    plt.axhline(ref_point[1], color='gray', linestyle='--', label='Maximum Allowed Cost')
 
     # Shading only below ref_point on the x-axis (left side)
     plt.fill_betweenx([0, ref_point[1]], x1=0.2, x2=ref_point[0], color='gray', alpha=0.2)  # Left side

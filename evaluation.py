@@ -485,22 +485,55 @@ def main():
             create_selected_box_plots(spread_diff, ylabel='PDI-Gains', title=f'{acc_int}-{acceptable_interval[1]}-{approach1}-{approach2}')
 
         # Calculate relative gains after all data is accumulated
-        relative_gains_hv = {approach: [] for approach in ['PARLEY', 'PARLEY+']}
-        relative_gains_pdi = {approach: [] for approach in ['PARLEY', 'PARLEY+']}
+        relative_gains_hv = {}
+        relative_gains_pdi = {}
 
-        for approach in ['PARLEY', 'PARLEY+']:
-            for hv_baseline, hv_approach in zip(hv['Baseline'], hv[approach]):
-                gains_hv = [(a - b) / b * 100 if b != 0 else 100 for a, b in zip(hv_approach, hv_baseline)]
-                relative_gains_hv[approach].extend(gains_hv)
+        cliffs_deltas_hv = {}
+        cliffs_deltas_pdi = {}
 
-            for pdi_baseline, pdi_approach in zip(pdi['Baseline'], pdi[approach]):
-                gains_pdi = [-(a - b) / b * 100 if b != 0 else -100 for a, b in zip(pdi_approach, pdi_baseline)]
-                relative_gains_pdi[approach].extend(gains_pdi)
+        for approach1, approach2 in itertools.combinations(['Baseline', 'PARLEY', 'PARLEY+'], 2):
+            key = f"{approach1}_vs_{approach2}"
+            relative_gains_hv[key] = []
+            relative_gains_pdi[key] = []
+            cliffs_deltas_hv[key] = None
+            cliffs_deltas_pdi[key] = None
 
-        print(f'Relative HV Gain for PARLEY: {np.mean(relative_gains_hv["PARLEY"]):.2f}%')
-        print(f'Relative HV Gain for PARLEY+: {np.mean(relative_gains_hv["PARLEY+"]):.2f}%')
-        print(f'Relative PDI Gain for PARLEY: {np.mean(relative_gains_pdi["PARLEY"]):.2f}%')
-        print(f'Relative PDI Gain for PARLEY+: {np.mean(relative_gains_pdi["PARLEY+"]):.2f}%')
+            hv_all_a = []
+            hv_all_b = []
+            pdi_all_a = []
+            pdi_all_b = []
+
+            for hv1, hv2 in zip(hv[approach1], hv[approach2]):
+                relative = [(b - a) / a * 100 if a != 0 else 100 for a, b in zip(hv1, hv2)]
+                relative_gains_hv[key].extend(relative)
+                hv_all_a.extend(hv1)
+                hv_all_b.extend(hv2)
+
+            for pdi1, pdi2 in zip(pdi[approach1], pdi[approach2]):
+                relative = [-(b - a) / a * 100 if a != 0 else -100 for a, b in zip(pdi1, pdi2)]
+                relative_gains_pdi[key].extend(relative)
+                pdi_all_a.extend(pdi1)
+                pdi_all_b.extend(pdi2)
+
+            # Cliff’s Delta for HV
+            more = sum(1 for a in hv_all_a for b in hv_all_b if b > a)
+            less = sum(1 for a in hv_all_a for b in hv_all_b if b < a)
+            total = len(hv_all_a) * len(hv_all_b)
+            cliffs_deltas_hv[key] = (more - less) / total if total else 0
+
+            # Cliff’s Delta for PDI (lower is better)
+            more = sum(1 for a in pdi_all_a for b in pdi_all_b if b < a)  # flipped since smaller is better
+            less = sum(1 for a in pdi_all_a for b in pdi_all_b if b > a)
+            total = len(pdi_all_a) * len(pdi_all_b)
+            cliffs_deltas_pdi[key] = (more - less) / total if total else 0
+
+        # Output
+        for key in relative_gains_hv:
+             # print(f"Relative HV Gain for {key}: {np.mean(relative_gains_hv[key]):.2f}%")
+             print(f"Cliff's delta HV for {key}: {cliffs_deltas_hv[key]:.3f}")
+        for key in relative_gains_pdi:
+            # print(f"Relative PDI Gain for {key}: {np.mean(relative_gains_pdi[key]):.2f}%")
+            print(f"Cliff's delta PDI for {key}: {cliffs_deltas_pdi[key]:.3f}")
 
     print_comparison_results(hv_count, "HV")
     print_comparison_results(spread_count, "PDI")
