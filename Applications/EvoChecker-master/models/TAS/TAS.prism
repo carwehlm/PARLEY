@@ -118,12 +118,12 @@ module turn
 endmodule
 
 module monitor 
-  invokeds1 : [0..1] init 0;
-  invokeds2 : [0..1] init 0;
-  [invokes1] true -> (invokeds1'=1);
-  [setService1] true -> (invokeds1'=0);
-  [invokes2] true -> (invokeds2'=1);
-  [setService2] true -> (invokeds2'=0);
+  invokeds1hat : [0..1] init 0;
+  invokeds2hat : [0..1] init 0;
+  [invokes1] true -> (invokeds1hat'=1);
+  [setService1] true -> (invokeds1hat'=0);
+  [invokes2] true -> (invokeds2hat'=1);
+  [setService2] true -> (invokeds2hat'=0);
 endmodule
 
 rewards "cost"

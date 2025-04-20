@@ -12,22 +12,19 @@ def manipulate_prism_model(input_path, output_path, possible_decisions=[1, 10], 
 
     variables, estimates = get_variables(input_path, decision_variables)
 
-    remove_counter_from_module(output_path)
+    counter_ids = remove_counter_from_module(output_path)
 
-    add_controller(output_path, estimates, variables, possible_decisions, baseline, initial_pop_file)
+    add_controller(output_path, estimates, variables, possible_decisions, baseline, initial_pop_file, counter_ids)
 
     add_turn(output_path, before_actions, after_actions)
 
 
 def get_variables(prism_model_path, decision_variables):
-    # get all int constants
     int_constants_pattern = re.compile(r'const\s+int\s+(\w+)\s*=\s*(-?\s*\d+)\s*;')
     int_constants = {}
 
     with open(prism_model_path, 'r') as prism_model_file:
-        # Process the file line by line
         for line in prism_model_file:
-            # Match constants in each line
             matches = int_constants_pattern.finditer(line)
             for match in matches:
                 int_constants[match.group(1)] = int(match.group(2).replace(" ", ""))
@@ -38,9 +35,7 @@ def get_variables(prism_model_path, decision_variables):
     _bel = []
 
     with open(prism_model_path, 'r') as prism_model_file:
-        # Process the file line by line again
         for line in prism_model_file:
-            # Match variables in each line
             matches = int_variable_declaration_pattern.finditer(line)
             for match in matches:
                 if match.group(1)[-3:] == 'hat':
@@ -62,56 +57,96 @@ def __get_limit(string, constants):
 
 
 def remove_counter_from_module(output_path):
+    removed_counters = []
+    new_lines = []
     pattern = re.compile(r"^\s*const\s+int\s+c\d*\s*=\s*\d+\s*;")
     with open(output_path, 'r') as file:
         lines = file.readlines()
 
-    # Filter out lines that match the regex pattern
-    new_lines = [line for line in lines if not pattern.match(line)]
+    for line in lines:
+        if pattern.match(line):
+            match = re.search(r'c(\d*)', line)
+            if match:
+                counter_id = match.group(1) or str(len(removed_counters) + 1)
+                removed_counters.append(int(counter_id))
+        else:
+            new_lines.append(line)
 
-    # Write the modified content back to the file
     with open(output_path, 'w') as file:
         file.writelines(new_lines)
+    return sorted(removed_counters)
 
 
-def add_controller(file_path, estimates, variables, possible_decisions, baseline, initial_pop_file):
+def add_controller(file_path, estimates, variables, possible_decisions, baseline, initial_pop_file, counter_ids):
     combinations = generate_combinations_list(variables)
-    __add_controller_prefix(file_path, possible_decisions, combinations, variables, baseline)
-    with open(file_path, 'a') as file:
-        file.write('  c : [1..10] init decision_0_0;\n')
+    __add_controller_prefix(file_path, possible_decisions, combinations, variables, baseline, counter_ids)
 
+    with open(file_path, 'a') as file:
+        # Loop through counter_ids and initialize them with the correct decision variables
+        for idx, counter_id in enumerate(counter_ids):
+            # Use the first combination for initialization of the counter
+            first_combination = combinations[0]
+            decision_var = f'decision'
+            for var in first_combination:
+                decision_var += f'_{var}'
+            decision_var += f'_{counter_id-1}'
+
+            # Initialize the counter with the appropriate decision variable
+            file.write(f'  c{counter_id} : [1..10] init {decision_var};\n')
+
+        # Add URC logic to handle combinations and decisions for counters
         for combination in combinations:
-            # combination describes a tuple of values, e.g., for ^x and ^y, such as (0, 0)
-            new_line = '  [URC] one=1'
+            new_line = '  [URC] '
             for c, estimate in zip(combination, estimates):
-                # estimate describes the variable's name
-                new_line += f' & {estimate}={c}'
-            new_line += ' -> (c\'=decision'
-            for c in combination:
-                new_line += f'_{c}'
-            new_line += ');\n'
+                new_line += f'{estimate}={c} & '
+            new_line = new_line.rstrip(' & ')
+
+            # Generate updates for each counter based on combinations and dynamic decision variables
+            updates = [
+                f"(c{counter_id}'=decision" + ''.join([f'_{c}' for c in combination]) + f'_{i})'
+                for i, counter_id in enumerate(counter_ids)
+            ]
+            new_line += ' -> ' + ' & '.join(updates) + ';\n'
             file.write(new_line)
+
+        # Finalize URC module
         file.write('endmodule\n')
 
     __generate_initial_population(initial_pop_file, possible_decisions, combinations)
 
 
-def __add_controller_prefix(file_path, possible_decisions, combinations, variables, baseline):
-    # write decision variables
+def __add_controller_prefix(file_path, possible_decisions, combinations, variables, baseline, counter_ids):
     with open(file_path, 'a') as file:
+        # Loop through combinations and create decision variables for each combination and counter
         for combination in combinations:
-            if baseline:
-                new_line = 'const int decision'
-            else:
-                new_line = 'evolve int decision'
-            for var in range(0, len(variables)):
-                new_line += '_' + str(combination[var])
-            if baseline:
-                new_line += '=1;'
-            else:
-                new_line += f' [{possible_decisions[0]}..{possible_decisions[1]}];'
-            file.write('\n' + new_line)
+            # Loop through the counter ids to handle decision variables for each counter
+            for counter_id in counter_ids:
+                # Start the line with "evolve int decision" or "const int decision" based on baseline
+                if baseline:
+                    new_line = f'const int decision'
+                else:
+                    new_line = f'evolve int decision'
+
+                # Append the combination of variables to the decision variable name
+                for var in range(0, len(variables)):
+                    new_line += f'_{combination[var]}'
+
+                # Append the counter_id at the end of the variable name
+                new_line += f'_{counter_id-1}'
+
+                # Set the decision range: either constant (baseline) or dynamic range (evolve)
+                if baseline:
+                    new_line += '=1;'
+                else:
+                    new_line += f' [{possible_decisions[0]}..{possible_decisions[1]}];'
+
+                # Write the declaration for the decision variable
+                file.write('\n' + new_line)
+
+        # Add the constant one for potential other uses
         file.write('const int one=1;\n')
+
+        # Begin the URC module declaration
         file.write('\nmodule URC\n')
 
 
@@ -119,7 +154,6 @@ def add_turn(file_path, before_actions, after_actions):
     with open(file_path, 'a') as file:
         file.write('module Turn\n')
         file.write('  t : [0..2] init 0;\n')
-        # actions that precede
         for action in before_actions:
             file.write(f'  [{action}] (t=0) -> (t\'=1);\n')
         file.write('\n')
@@ -139,7 +173,6 @@ def generate_combinations_list(variables):
         if not remaining_variables:
             result.append(tuple(current_combination))
             return
-
         current_variable = remaining_variables[0]
         for value in range(current_variable[1], current_variable[2] + 1):
             generate_combinations_recursive(
@@ -152,7 +185,6 @@ def generate_combinations_list(variables):
 
 
 def __generate_initial_population(file_path, possible_decisions, combinations):
-    # write decision variables
     with open(file_path, 'w') as file:
         for c in range(possible_decisions[0], possible_decisions[1]):
             new_line = ''

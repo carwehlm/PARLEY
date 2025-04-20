@@ -77,11 +77,11 @@ module Knowledge
 
   [probe_s1] s1>0 & s1_c>c1 -> (s1_hat'=1) & (s1_c'=1);
   [probe_s1] s1=0 & s1_c>c1 -> (s1_hat'=0) & (s1_c'=1);
-  [skip_probe] t=3 & s1_c<=c1 -> true;
+  [skip_probe] t=2 & s1_c<=c1 -> true;
 
   [probe_s2] s2>0 & s2_c>c2 -> (s2_hat'=1) & (s2_c'=1);
   [probe_s2] s2=0 & s2_c>c2 -> (s2_hat'=0) & (s2_c'=1);
-  [skip_probe] t=4 & s2_c<=c2 -> true;
+  [skip_probe] t=3 & s2_c<=c2 -> true;
 
 
   [invokes1] setAlarm>0 -> true;
@@ -98,31 +98,30 @@ module turn
   [setService1] t=0 & counter<iterations -> (t'=t+1) & (counter'=counter+1);
   [setService2] t=1 -> (t'=t+1);
 
-  [URC] t=2 -> (t'=3);
 
   //this is to resolve uncertainty
-  [probe_s1] t=3 -> (t'=t+1);
+  [probe_s1] t=2 -> (t'=t+1);
+  [skip_probe] t=2 -> (t'=t+1);
+  [probe_s2] t=3 -> (t'=t+1);
   [skip_probe] t=3 -> (t'=t+1);
-  [probe_s2] t=4 -> (t'=t+1);
-  [skip_probe] t=4 -> (t'=t+1);
 
-  [alarm] t=5 -> (t'=t+1);
+  [alarm] t=4 -> (t'=t+1);
 
   //this is to call for alarm
-  [invokes1] t=6 -> (t'=0);
-  [invokes2] t=6 -> (t'=0);
-  [skip] t=6 -> (t'=0);
+  [invokes1] t=5 -> (t'=0);
+  [invokes2] t=5 -> (t'=0);
+  [skip] t=5 -> (t'=0);
 
 
 endmodule
 
 module monitor 
-  invokeds1 : [0..1] init 0;
-  invokeds2 : [0..1] init 0;
-  [invokes1] true -> (invokeds1'=1);
-  [setService1] true -> (invokeds1'=0);
-  [invokes2] true -> (invokeds2'=1);
-  [setService2] true -> (invokeds2'=0);
+  invokeds1hat : [0..1] init 0;
+  invokeds2hat : [0..1] init 0;
+  [invokes1] true -> (invokeds1hat'=1);
+  [setService1] true -> (invokeds1hat'=0);
+  [invokes2] true -> (invokeds2hat'=1);
+  [setService2] true -> (invokeds2hat'=0);
 endmodule
 
 rewards "cost"
@@ -137,59 +136,67 @@ rewards "service"
   [invokes2] s2=0 : 10;
 endrewards
 
-evolve int decision_0_0_0_0_0 [1..10];
-evolve int decision_0_0_0_1_0 [1..10];
-evolve int decision_0_0_1_0_0 [1..10];
-evolve int decision_0_0_1_1_0 [1..10];
-evolve int decision_0_1_0_0_0 [1..10];
-evolve int decision_0_1_0_1_0 [1..10];
-evolve int decision_0_1_1_0_0 [1..10];
-evolve int decision_0_1_1_1_0 [1..10];
-evolve int decision_1_0_0_0_0 [1..10];
-evolve int decision_1_0_0_1_0 [1..10];
-evolve int decision_1_0_1_0_0 [1..10];
-evolve int decision_1_0_1_1_0 [1..10];
-evolve int decision_1_1_0_0_0 [1..10];
-evolve int decision_1_1_0_1_0 [1..10];
-evolve int decision_1_1_1_0_0 [1..10];
-evolve int decision_1_1_1_1_0 [1..10];
 
+evolve int decision_0_0_0_0_0 [1..10];
 evolve int decision_0_0_0_0_1 [1..10];
+evolve int decision_0_0_0_1_0 [1..10];
 evolve int decision_0_0_0_1_1 [1..10];
+evolve int decision_0_0_1_0_0 [1..10];
 evolve int decision_0_0_1_0_1 [1..10];
+evolve int decision_0_0_1_1_0 [1..10];
 evolve int decision_0_0_1_1_1 [1..10];
+evolve int decision_0_1_0_0_0 [1..10];
 evolve int decision_0_1_0_0_1 [1..10];
+evolve int decision_0_1_0_1_0 [1..10];
 evolve int decision_0_1_0_1_1 [1..10];
+evolve int decision_0_1_1_0_0 [1..10];
 evolve int decision_0_1_1_0_1 [1..10];
+evolve int decision_0_1_1_1_0 [1..10];
 evolve int decision_0_1_1_1_1 [1..10];
+evolve int decision_1_0_0_0_0 [1..10];
 evolve int decision_1_0_0_0_1 [1..10];
+evolve int decision_1_0_0_1_0 [1..10];
 evolve int decision_1_0_0_1_1 [1..10];
+evolve int decision_1_0_1_0_0 [1..10];
 evolve int decision_1_0_1_0_1 [1..10];
+evolve int decision_1_0_1_1_0 [1..10];
 evolve int decision_1_0_1_1_1 [1..10];
+evolve int decision_1_1_0_0_0 [1..10];
 evolve int decision_1_1_0_0_1 [1..10];
+evolve int decision_1_1_0_1_0 [1..10];
 evolve int decision_1_1_0_1_1 [1..10];
+evolve int decision_1_1_1_0_0 [1..10];
 evolve int decision_1_1_1_0_1 [1..10];
-evolve int decision_1_1_1_1_1 [1..10];
+evolve int decision_1_1_1_1_0 [1..10];
+evolve int decision_1_1_1_1_1 [1..10];const int one=1;
 
 module URC
-   c1 : [1..10] init 1;
-   c2 : [1..10] init 1;
-
-  [URC] s1_hat=0 & s2_hat=0 & invokeds1=0 & invokeds2=0 -> (c1'=decision_0_0_0_0_0) & (c2'=decision_0_0_0_0_1);
-  [URC] s1_hat=0 & s2_hat=0 & invokeds1=0 & invokeds2=1 -> (c1'=decision_0_0_0_1_0) & (c2'=decision_0_0_0_1_1);
-  [URC] s1_hat=0 & s2_hat=0 & invokeds1=1 & invokeds2=0 -> (c1'=decision_0_0_1_0_0) & (c2'=decision_0_0_1_0_1);
-  [URC] s1_hat=0 & s2_hat=0 & invokeds1=1 & invokeds2=1 -> (c1'=decision_0_0_1_1_0) & (c2'=decision_0_0_1_1_1);
-  [URC] s1_hat=0 & s2_hat=1 & invokeds1=0 & invokeds2=0 -> (c1'=decision_0_1_0_0_0) & (c2'=decision_0_1_0_0_1);
-  [URC] s1_hat=0 & s2_hat=1 & invokeds1=0 & invokeds2=1 -> (c1'=decision_0_1_0_1_0) & (c2'=decision_0_1_0_1_1);
-  [URC] s1_hat=0 & s2_hat=1 & invokeds1=1 & invokeds2=0 -> (c1'=decision_0_1_1_0_0) & (c2'=decision_0_1_1_0_1);
-  [URC] s1_hat=0 & s2_hat=1 & invokeds1=1 & invokeds2=1 -> (c1'=decision_0_1_1_1_0) & (c2'=decision_0_1_1_1_1);
-  [URC] s1_hat=1 & s2_hat=0 & invokeds1=0 & invokeds2=0 -> (c1'=decision_1_0_0_0_0) & (c2'=decision_1_0_0_0_1);
-  [URC] s1_hat=1 & s2_hat=0 & invokeds1=0 & invokeds2=1 -> (c1'=decision_1_0_0_1_0) & (c2'=decision_1_0_0_1_1);
-  [URC] s1_hat=1 & s2_hat=0 & invokeds1=1 & invokeds2=0 -> (c1'=decision_1_0_1_0_0) & (c2'=decision_1_0_1_0_1);
-  [URC] s1_hat=1 & s2_hat=0 & invokeds1=1 & invokeds2=1 -> (c1'=decision_1_0_1_1_0) & (c2'=decision_1_0_1_1_1);
-  [URC] s1_hat=1 & s2_hat=1 & invokeds1=0 & invokeds2=0 -> (c1'=decision_1_1_0_0_0) & (c2'=decision_1_1_0_0_1);
-  [URC] s1_hat=1 & s2_hat=1 & invokeds1=0 & invokeds2=1 -> (c1'=decision_1_1_0_1_0) & (c2'=decision_1_1_0_1_1);
-  [URC] s1_hat=1 & s2_hat=1 & invokeds1=1 & invokeds2=0 -> (c1'=decision_1_1_1_0_0) & (c2'=decision_1_1_1_0_1);
-  [URC] s1_hat=1 & s2_hat=1 & invokeds1=1 & invokeds2=1 -> (c1'=decision_1_1_1_1_0) & (c2'=decision_1_1_1_1_1);
+  c1 : [1..10] init decision_0_0_0_0_0;
+  c2 : [1..10] init decision_0_0_0_0_1;
+  [URC] s1_hat=0 & s2_hat=0 & invokeds1hat=0 & invokeds2hat=0 -> (c1'=decision_0_0_0_0_0) & (c2'=decision_0_0_0_0_1);
+  [URC] s1_hat=0 & s2_hat=0 & invokeds1hat=0 & invokeds2hat=1 -> (c1'=decision_0_0_0_1_0) & (c2'=decision_0_0_0_1_1);
+  [URC] s1_hat=0 & s2_hat=0 & invokeds1hat=1 & invokeds2hat=0 -> (c1'=decision_0_0_1_0_0) & (c2'=decision_0_0_1_0_1);
+  [URC] s1_hat=0 & s2_hat=0 & invokeds1hat=1 & invokeds2hat=1 -> (c1'=decision_0_0_1_1_0) & (c2'=decision_0_0_1_1_1);
+  [URC] s1_hat=0 & s2_hat=1 & invokeds1hat=0 & invokeds2hat=0 -> (c1'=decision_0_1_0_0_0) & (c2'=decision_0_1_0_0_1);
+  [URC] s1_hat=0 & s2_hat=1 & invokeds1hat=0 & invokeds2hat=1 -> (c1'=decision_0_1_0_1_0) & (c2'=decision_0_1_0_1_1);
+  [URC] s1_hat=0 & s2_hat=1 & invokeds1hat=1 & invokeds2hat=0 -> (c1'=decision_0_1_1_0_0) & (c2'=decision_0_1_1_0_1);
+  [URC] s1_hat=0 & s2_hat=1 & invokeds1hat=1 & invokeds2hat=1 -> (c1'=decision_0_1_1_1_0) & (c2'=decision_0_1_1_1_1);
+  [URC] s1_hat=1 & s2_hat=0 & invokeds1hat=0 & invokeds2hat=0 -> (c1'=decision_1_0_0_0_0) & (c2'=decision_1_0_0_0_1);
+  [URC] s1_hat=1 & s2_hat=0 & invokeds1hat=0 & invokeds2hat=1 -> (c1'=decision_1_0_0_1_0) & (c2'=decision_1_0_0_1_1);
+  [URC] s1_hat=1 & s2_hat=0 & invokeds1hat=1 & invokeds2hat=0 -> (c1'=decision_1_0_1_0_0) & (c2'=decision_1_0_1_0_1);
+  [URC] s1_hat=1 & s2_hat=0 & invokeds1hat=1 & invokeds2hat=1 -> (c1'=decision_1_0_1_1_0) & (c2'=decision_1_0_1_1_1);
+  [URC] s1_hat=1 & s2_hat=1 & invokeds1hat=0 & invokeds2hat=0 -> (c1'=decision_1_1_0_0_0) & (c2'=decision_1_1_0_0_1);
+  [URC] s1_hat=1 & s2_hat=1 & invokeds1hat=0 & invokeds2hat=1 -> (c1'=decision_1_1_0_1_0) & (c2'=decision_1_1_0_1_1);
+  [URC] s1_hat=1 & s2_hat=1 & invokeds1hat=1 & invokeds2hat=0 -> (c1'=decision_1_1_1_0_0) & (c2'=decision_1_1_1_0_1);
+  [URC] s1_hat=1 & s2_hat=1 & invokeds1hat=1 & invokeds2hat=1 -> (c1'=decision_1_1_1_1_0) & (c2'=decision_1_1_1_1_1);
 endmodule
+module Turn
+  t : [0..2] init 0;
+  [setService1] (t=0) -> (t'=1);
+  [setService2] (t=0) -> (t'=1);
 
+  [URC] (t=1) -> (t'=2);
+
+  [probe_s1] (t=2) -> (t'=0);
+  [skip_probe] (t=2) -> (t'=0);
+endmodule
